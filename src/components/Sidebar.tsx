@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -12,9 +11,10 @@ interface SidebarProps {
   params: SimulationParams;
   setParams: React.Dispatch<React.SetStateAction<SimulationParams>>;
   onRunSimulation: () => void;
+  tabbed?: boolean; // New prop to indicate if being used in tabbed layout
 }
 
-const Sidebar = ({ params, setParams, onRunSimulation }: SidebarProps) => {
+const Sidebar = ({ params, setParams, onRunSimulation, tabbed = false }: SidebarProps) => {
   const availableLocations: Location[] = mapLocations[params.mapType as MapType];
 
   const handleChange = (key: keyof SimulationParams, value: string) => {
@@ -34,12 +34,9 @@ const Sidebar = ({ params, setParams, onRunSimulation }: SidebarProps) => {
     }
   };
 
-  return (
-    <aside className="bg-sidebar p-4 rounded-lg w-80 flex flex-col gap-5 h-full max-h-screen overflow-y-auto">
-      <div className="flex items-center justify-center mb-2">
-        <h2 className="text-sidebar-foreground text-2xl font-bold">RouteWise Explorer</h2>
-      </div>
-      
+  // If being used in tabbed mode, we don't need the outer container
+  const content = (
+    <>
       <Card className="bg-sidebar-accent border-sidebar-border">
         <CardContent className="p-4">
           <div className="space-y-4">
@@ -200,11 +197,26 @@ const Sidebar = ({ params, setParams, onRunSimulation }: SidebarProps) => {
 
       <Button 
         onClick={onRunSimulation}
-        className="w-full bg-sidebar-primary hover:bg-sidebar-primary/90 text-sidebar-primary-foreground flex items-center justify-center gap-2 py-6"
+        className="w-full bg-sidebar-primary hover:bg-sidebar-primary/90 text-sidebar-primary-foreground flex items-center justify-center gap-2 py-6 mt-4"
       >
         Run Simulation
         <ChevronRight size={18} />
       </Button>
+    </>
+  );
+
+  // If in tabbed mode, return just the content
+  if (tabbed) {
+    return content;
+  }
+
+  // Otherwise wrap in the container
+  return (
+    <aside className="bg-sidebar p-4 rounded-lg w-80 flex flex-col gap-5 h-full max-h-screen overflow-y-auto">
+      <div className="flex items-center justify-center mb-2">
+        <h2 className="text-sidebar-foreground text-2xl font-bold">RouteWise Explorer</h2>
+      </div>
+      {content}
     </aside>
   );
 };
