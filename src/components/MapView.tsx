@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import { Icon } from 'leaflet';
 import { SimulationResult, MapType, Location } from '../types';
@@ -82,7 +82,12 @@ const MapView = ({ mapType, result, startLocation, endLocation }: MapViewProps) 
   }, [result, mapType, locationsMap]);
   
   useEffect(() => {
-    setInitialized(true);
+    // Add a short delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      setInitialized(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, []);
   
   if (!initialized) {
