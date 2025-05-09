@@ -8,8 +8,10 @@ import { mapLocations, getMapCenter, getMapZoom } from '../data/maps';
 interface MapViewProps {
   mapType: MapType;
   result: SimulationResult | null;
+  compareResult: SimulationResult | null;
   startLocation: string;
   endLocation: string;
+  showCompare?: boolean;
 }
 
 // Define custom icons for markers
@@ -64,9 +66,17 @@ const MapUpdater = ({ mapType, result }: { mapType: MapType, result: SimulationR
   return null;
 };
 
-const MapView = ({ mapType, result, startLocation, endLocation }: MapViewProps) => {
+const MapView = ({ 
+  mapType, 
+  result, 
+  compareResult,
+  startLocation, 
+  endLocation,
+  showCompare = false
+}: MapViewProps) => {
   const [initialized, setInitialized] = useState(false);
   const [routePath, setRoutePath] = useState<[number, number][]>([]);
+  const [compareRoutePath, setCompareRoutePath] = useState<[number, number][]>([]);
   const mapRef = useRef(null);
   
   const center = getMapCenter(mapType);
@@ -81,7 +91,13 @@ const MapView = ({ mapType, result, startLocation, endLocation }: MapViewProps) 
     } else {
       setRoutePath([]);
     }
-  }, [result, mapType, locationsMap]);
+
+    if (showCompare && compareResult && compareResult.path.length > 0) {
+      setCompareRoutePath(getRouteCoordinates(compareResult.path, locationsMap));
+    } else {
+      setCompareRoutePath([]);
+    }
+  }, [result, compareResult, mapType, locationsMap, showCompare]);
   
   useEffect(() => {
     // Add a short delay to ensure DOM is ready
@@ -132,7 +148,7 @@ const MapView = ({ mapType, result, startLocation, endLocation }: MapViewProps) 
             );
           })}
           
-          {/* Draw route if available */}
+          {/* Draw primary route if available */}
           {routePath.length > 0 && (
             <Polyline 
               positions={routePath} 
@@ -143,6 +159,21 @@ const MapView = ({ mapType, result, startLocation, endLocation }: MapViewProps) 
               weight={5}
               opacity={0.8}
               className="algorithm-route"
+            />
+          )}
+
+          {/* Draw comparison route if available */}
+          {showCompare && compareRoutePath.length > 0 && (
+            <Polyline 
+              positions={compareRoutePath} 
+              color={compareResult?.algorithm === 'dijkstra' ? '#3B82F6' : 
+                    compareResult?.algorithm === 'astar' ? '#10B981' : 
+                    compareResult?.algorithm === 'bellman-ford' ? '#8B5CF6' : 
+                    '#F59E0B'}
+              weight={5}
+              opacity={0.6}
+              dashArray="5,10"
+              className="algorithm-compare-route"
             />
           )}
         </MapContainer>
