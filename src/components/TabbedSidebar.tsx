@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Sidebar from './Sidebar';
 import GraphBuilder from './GraphBuilder';
+import ScenarioManager from './ScenarioManager';
 import { SimulationParams } from '../types';
 import { Settings, Network, Save } from 'lucide-react';
 
@@ -18,6 +19,12 @@ const TabbedSidebar: React.FC<TabbedSidebarProps> = ({
   onRunSimulation,
 }) => {
   const [activeTab, setActiveTab] = useState('simulation');
+
+  // Emit custom event when tab changes
+  useEffect(() => {
+    const event = new CustomEvent('sidebar-tab-change', { detail: activeTab });
+    window.dispatchEvent(event);
+  }, [activeTab]);
 
   return (
     <div className="bg-sidebar p-4 rounded-lg w-80 flex flex-col gap-2 h-full max-h-screen overflow-hidden">
@@ -57,15 +64,15 @@ const TabbedSidebar: React.FC<TabbedSidebarProps> = ({
           </TabsContent>
           
           <TabsContent value="graphBuilder" className="h-full mt-0">
-            <GraphBuilder />
+            <GraphBuilder showControls={true} />
           </TabsContent>
           
           <TabsContent value="scenarios" className="h-full mt-0">
-            <div className="flex flex-col items-center justify-center h-full text-sidebar-foreground">
-              <p className="text-muted-foreground text-center">
-                Scenario management will be available in the next update.
-              </p>
-            </div>
+            <ScenarioManager
+              currentParams={params}
+              onLoadScenario={(scenarioParams) => setParams(scenarioParams)}
+              onRunSimulation={onRunSimulation}
+            />
           </TabsContent>
         </div>
       </Tabs>

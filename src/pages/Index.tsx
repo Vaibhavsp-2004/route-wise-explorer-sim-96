@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import TabbedSidebar from '../components/TabbedSidebar';
 import MapView from '../components/MapView';
+import GraphBuilder from '../components/GraphBuilder';
 import ComparisonTable from '../components/ComparisonTable';
 import AlgorithmExplanation from '../components/AlgorithmExplanation';
 import { Algorithm, MapType, SimulationParams, SimulationResult } from '../types';
@@ -32,6 +33,7 @@ const Index = () => {
   const [compareAlgorithm, setCompareAlgorithm] = useState<Algorithm | null>(null);
   const [compareResult, setCompareResult] = useState<SimulationResult | null>(null);
   const [activeTab, setActiveTab] = useState<MapType>('city');
+  const [sidebarTab, setSidebarTab] = useState('simulation');
   
   // Handle running the simulation
   const handleRunSimulation = () => {
@@ -110,7 +112,20 @@ const Index = () => {
   const handleDownloadPDF = () => {
     exportToPDF(params, result, compareAlgorithm, compareResult);
   };
-  
+
+  // Listen for sidebar tab changes
+  useEffect(() => {
+    const handleSidebarTabChange = (event: CustomEvent) => {
+      setSidebarTab(event.detail);
+    };
+
+    window.addEventListener('sidebar-tab-change', handleSidebarTabChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('sidebar-tab-change', handleSidebarTabChange as EventListener);
+    };
+  }, []);
+
   return (
     <div className="flex h-screen">
       <TabbedSidebar 
@@ -145,77 +160,89 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Map type tabs */}
-          <Tabs defaultValue="city" value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid grid-cols-3">
-              <TabsTrigger value="city">City Map</TabsTrigger>
-              <TabsTrigger value="rural">Rural Map</TabsTrigger>
-              <TabsTrigger value="mountain">Mountain Map</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          
-          {/* Algorithm comparison selector */}
-          <div className="bg-muted/40 p-4 rounded-md border">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-2">
-                <ArrowRightLeft className="h-5 w-5" />
-                <h2 className="text-lg font-medium">Algorithm Comparison</h2>
-              </div>
+          {sidebarTab !== 'graphBuilder' && (
+            <>
+              {/* Map type tabs */}
+              <Tabs defaultValue="city" value={activeTab} onValueChange={handleTabChange} className="w-full">
+                <TabsList className="grid grid-cols-3">
+                  <TabsTrigger value="city">City Map</TabsTrigger>
+                  <TabsTrigger value="rural">Rural Map</TabsTrigger>
+                  <TabsTrigger value="mountain">Mountain Map</TabsTrigger>
+                </TabsList>
+              </Tabs>
               
-              <RadioGroup 
-                className="flex space-x-2" 
-                value={compareAlgorithm || "none"}
-                onValueChange={(value) => handleCompareAlgorithmChange(value === "none" ? null : value as Algorithm)}
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="none" id="none" />
-                  <Label htmlFor="none">None</Label>
+              {/* Algorithm comparison selector */}
+              <div className="bg-muted/40 p-4 rounded-md border">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    <ArrowRightLeft className="h-5 w-5" />
+                    <h2 className="text-lg font-medium">Algorithm Comparison</h2>
+                  </div>
+                  
+                  <RadioGroup 
+                    className="flex space-x-2" 
+                    value={compareAlgorithm || "none"}
+                    onValueChange={(value) => handleCompareAlgorithmChange(value === "none" ? null : value as Algorithm)}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="none" id="none" />
+                      <Label htmlFor="none">None</Label>
+                    </div>
+                    
+                    {["dijkstra", "astar", "bellman-ford", "floyd-warshall"].filter(algo => algo !== params.algorithm).map((algo) => (
+                      <div key={algo} className="flex items-center space-x-2">
+                        <RadioGroupItem value={algo} id={algo} />
+                        <Label htmlFor={algo}>{algo === "dijkstra" ? "Dijkstra" : 
+                                             algo === "astar" ? "A*" : 
+                                             algo === "bellman-ford" ? "Bellman-Ford" : 
+                                             "Floyd-Warshall"}</Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
                 </div>
                 
-                {["dijkstra", "astar", "bellman-ford", "floyd-warshall"].filter(algo => algo !== params.algorithm).map((algo) => (
-                  <div key={algo} className="flex items-center space-x-2">
-                    <RadioGroupItem value={algo} id={algo} />
-                    <Label htmlFor={algo}>{algo === "dijkstra" ? "Dijkstra" : 
-                                         algo === "astar" ? "A*" : 
-                                         algo === "bellman-ford" ? "Bellman-Ford" : 
-                                         "Floyd-Warshall"}</Label>
+                {compareAlgorithm && compareResult && (
+                  <div className="mt-3 text-sm text-muted-foreground">
+                    Comparing {params.algorithm} (solid line) with {compareAlgorithm} (dashed line)
                   </div>
-                ))}
-              </RadioGroup>
-            </div>
-            
-            {compareAlgorithm && compareResult && (
-              <div className="mt-3 text-sm text-muted-foreground">
-                Comparing {params.algorithm} (solid line) with {compareAlgorithm} (dashed line)
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
           
           <div id="pdf-content" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="h-[400px]">
-                <MapView 
-                  mapType={params.mapType as MapType} 
-                  result={result} 
-                  compareResult={compareResult}
-                  startLocation={params.startLocation}
-                  endLocation={params.endLocation}
-                  showCompare={!!compareAlgorithm && !!compareResult}
-                />
+                {sidebarTab === 'graphBuilder' ? (
+                  <GraphBuilder isEmbedded={true} />
+                ) : (
+                  <MapView 
+                    mapType={params.mapType as MapType} 
+                    result={result} 
+                    compareResult={compareResult}
+                    startLocation={params.startLocation}
+                    endLocation={params.endLocation}
+                    showCompare={!!compareAlgorithm && !!compareResult}
+                  />
+                )}
               </div>
               <div>
-                <ComparisonTable result={result} compareResult={compareResult} />
+                {sidebarTab !== 'graphBuilder' && (
+                  <ComparisonTable result={result} compareResult={compareResult} />
+                )}
               </div>
             </div>
             
-            <div className="mt-8">
-              <AlgorithmExplanation 
-                algorithm={params.algorithm as Algorithm} 
-                result={result}
-                compareAlgorithm={compareAlgorithm as Algorithm | undefined}
-                compareResult={compareResult}
-              />
-            </div>
+            {sidebarTab !== 'graphBuilder' && (
+              <div className="mt-8">
+                <AlgorithmExplanation 
+                  algorithm={params.algorithm as Algorithm} 
+                  result={result}
+                  compareAlgorithm={compareAlgorithm as Algorithm | undefined}
+                  compareResult={compareResult}
+                />
+              </div>
+            )}
           </div>
         </div>
       </main>
