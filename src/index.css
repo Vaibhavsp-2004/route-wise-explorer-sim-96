@@ -103,6 +103,9 @@
   z-index: 0;
 }
 
+/* Import Leaflet CSS */
+@import 'leaflet/dist/leaflet.css';
+
 .algorithm-route {
   transition: stroke-dashoffset 1s linear;
   animation: dash 2s linear forwards;

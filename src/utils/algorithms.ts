@@ -1,5 +1,4 @@
-
-import { Algorithm, RouteGraph, SimulationParams, SimulationResult, Vehicle, Weather, TimeOfDay } from "../types";
+import { Algorithm, RouteGraph, SimulationParams, SimulationResult, Vehicle, Weather, TimeOfDay, RouteEdge } from "../types";
 
 // Helper function to find node with minimum distance
 const minDistance = (dist: Record<string, number>, visited: Record<string, boolean>): string => {
@@ -519,6 +518,9 @@ export const runSimulation = (params: SimulationParams): SimulationResult => {
     },
   };
 };
+
+// Import getRouteGraph from maps.ts to fix the missing reference
+import { getRouteGraph } from '../data/maps';
 
 // Function to get algorithm description
 export const getAlgorithmDescription = (algorithm: Algorithm): {
