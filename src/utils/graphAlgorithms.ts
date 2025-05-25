@@ -47,7 +47,7 @@ const convertToGraph = (nodes: Node[], edges: Edge[]): Graph => {
   return { nodes: graphNodes, edges: graphEdges };
 };
 
-// Calculate Euclidean distance between two nodes (for A* heuristic)
+// Calculate Euclidean distance between two nodes (for heuristic)
 const calculateDistance = (node1: GraphNode, node2: GraphNode): number => {
   const dx = node1.x - node2.x;
   const dy = node1.y - node2.y;
@@ -78,243 +78,214 @@ const calculatePathCost = (path: string[], graph: Graph): number => {
   return totalCost;
 };
 
-// Dijkstra's algorithm
-const dijkstra = (graph: Graph, start: string, end: string): { path: string[]; distance: number; time: number } => {
-  const distances: Record<string, number> = {};
-  const previous: Record<string, string> = {};
-  const visited: Set<string> = new Set();
-  const unvisited: Set<string> = new Set();
-
-  // Initialize distances
-  Object.keys(graph.nodes).forEach(nodeId => {
-    distances[nodeId] = nodeId === start ? 0 : Infinity;
-    unvisited.add(nodeId);
-  });
-
-  while (unvisited.size > 0) {
-    // Find unvisited node with minimum distance
-    let current = '';
-    let minDistance = Infinity;
-    
-    unvisited.forEach(nodeId => {
-      if (distances[nodeId] < minDistance) {
-        minDistance = distances[nodeId];
-        current = nodeId;
-      }
-    });
-
-    if (!current || distances[current] === Infinity) break;
-
-    unvisited.delete(current);
-    visited.add(current);
-
-    if (current === end) break;
-
-    // Update distances to neighbors
-    graph.edges
-      .filter(edge => edge.from === current)
-      .forEach(edge => {
-        const neighbor = edge.to;
-        if (!visited.has(neighbor)) {
-          const newDistance = distances[current] + edge.weight;
-          if (newDistance < distances[neighbor]) {
-            distances[neighbor] = newDistance;
-            previous[neighbor] = current;
-          }
-        }
-      });
-  }
-
-  // Reconstruct path
-  const path: string[] = [];
-  let current = end;
+// Brute Force algorithm - tries all possible paths
+const bruteForce = (graph: Graph, start: string, end: string): { path: string[]; distance: number; time: number } => {
+  const allNodes = Object.keys(graph.nodes);
+  const intermediateNodes = allNodes.filter(node => node !== start && node !== end);
   
-  if (previous[current] || current === start) {
-    while (current) {
-      path.unshift(current);
-      if (current === start) break;
-      current = previous[current];
+  let bestPath: string[] = [];
+  let bestDistance = Infinity;
+  
+  // Generate all permutations of intermediate nodes
+  const permute = (arr: string[]): string[][] => {
+    if (arr.length <= 1) return [arr];
+    const result: string[][] = [];
+    for (let i = 0; i < arr.length; i++) {
+      const rest = arr.slice(0, i).concat(arr.slice(i + 1));
+      const perms = permute(rest);
+      for (const perm of perms) {
+        result.push([arr[i]].concat(perm));
+      }
+    }
+    return result;
+  };
+  
+  const permutations = permute(intermediateNodes);
+  
+  // Try each permutation
+  for (const perm of permutations) {
+    const fullPath = [start, ...perm, end];
+    const pathCost = calculatePathCost(fullPath, graph);
+    
+    if (pathCost < bestDistance) {
+      bestDistance = pathCost;
+      bestPath = fullPath;
     }
   }
-
-  const pathCost = calculatePathCost(path, graph);
-
+  
+  // If no valid path found, try direct connection
+  if (bestPath.length === 0) {
+    const directPath = [start, end];
+    const directCost = calculatePathCost(directPath, graph);
+    if (directCost > 0) {
+      bestPath = directPath;
+      bestDistance = directCost;
+    }
+  }
+  
   return {
-    path,
-    distance: pathCost,
-    time: pathCost * 0.5, // More realistic time calculation based on actual path cost
+    path: bestPath,
+    distance: bestDistance === Infinity ? 0 : bestDistance,
+    time: (bestDistance === Infinity ? 0 : bestDistance) * 0.5,
   };
 };
 
-// A* algorithm
-const astar = (graph: Graph, start: string, end: string): { path: string[]; distance: number; time: number } => {
-  const openSet: Set<string> = new Set([start]);
-  const closedSet: Set<string> = new Set();
-  const gScore: Record<string, number> = {};
-  const fScore: Record<string, number> = {};
-  const cameFrom: Record<string, string> = {};
-
-  // Initialize scores
-  Object.keys(graph.nodes).forEach(nodeId => {
-    gScore[nodeId] = nodeId === start ? 0 : Infinity;
-    fScore[nodeId] = nodeId === start ? calculateDistance(graph.nodes[start], graph.nodes[end]) : Infinity;
-  });
-
-  while (openSet.size > 0) {
-    // Find node with lowest fScore
-    let current = '';
-    let minFScore = Infinity;
-    
-    openSet.forEach(nodeId => {
-      if (fScore[nodeId] < minFScore) {
-        minFScore = fScore[nodeId];
-        current = nodeId;
-      }
-    });
-
+// Dynamic Programming algorithm (simplified version using memoization)
+const dynamicProgramming = (graph: Graph, start: string, end: string): { path: string[]; distance: number; time: number } => {
+  const memo: Record<string, { distance: number; path: string[] }> = {};
+  
+  const dp = (current: string, visited: Set<string>): { distance: number; path: string[] } => {
     if (current === end) {
-      // Reconstruct path
-      const path: string[] = [];
-      let temp = current;
-      
-      while (temp) {
-        path.unshift(temp);
-        if (temp === start) break;
-        temp = cameFrom[temp];
-      }
-      
-      const pathCost = calculatePathCost(path, graph);
-      
-      return {
-        path,
-        distance: pathCost,
-        time: pathCost * 0.5,
-      };
+      return { distance: 0, path: [end] };
     }
-
-    openSet.delete(current);
-    closedSet.add(current);
-
-    // Check neighbors
-    graph.edges
-      .filter(edge => edge.from === current)
-      .forEach(edge => {
-        const neighbor = edge.to;
-        
-        if (closedSet.has(neighbor)) return;
-
-        const tentativeGScore = gScore[current] + edge.weight;
-
-        if (!openSet.has(neighbor)) {
-          openSet.add(neighbor);
-        } else if (tentativeGScore >= gScore[neighbor]) {
-          return;
-        }
-
-        cameFrom[neighbor] = current;
-        gScore[neighbor] = tentativeGScore;
-        fScore[neighbor] = gScore[neighbor] + calculateDistance(graph.nodes[neighbor], graph.nodes[end]);
-      });
-  }
-
-  return { path: [], distance: 0, time: 0 };
-};
-
-// Bellman-Ford algorithm
-const bellmanFord = (graph: Graph, start: string, end: string): { path: string[]; distance: number; time: number } => {
-  const distances: Record<string, number> = {};
-  const previous: Record<string, string> = {};
-  const nodeIds = Object.keys(graph.nodes);
-
-  // Initialize distances
-  nodeIds.forEach(nodeId => {
-    distances[nodeId] = nodeId === start ? 0 : Infinity;
-  });
-
-  // Relax edges |V| - 1 times
-  for (let i = 0; i < nodeIds.length - 1; i++) {
-    graph.edges.forEach(edge => {
-      if (distances[edge.from] !== Infinity && distances[edge.from] + edge.weight < distances[edge.to]) {
-        distances[edge.to] = distances[edge.from] + edge.weight;
-        previous[edge.to] = edge.from;
+    
+    const key = `${current}-${Array.from(visited).sort().join(',')}`;
+    if (memo[key]) {
+      return memo[key];
+    }
+    
+    let minDistance = Infinity;
+    let bestPath: string[] = [];
+    
+    // Try all unvisited neighbors
+    const neighbors = graph.edges
+      .filter(edge => edge.from === current && !visited.has(edge.to))
+      .map(edge => ({ node: edge.to, weight: edge.weight }));
+    
+    for (const neighbor of neighbors) {
+      const newVisited = new Set(visited);
+      newVisited.add(current);
+      
+      const result = dp(neighbor.node, newVisited);
+      const totalDistance = neighbor.weight + result.distance;
+      
+      if (totalDistance < minDistance) {
+        minDistance = totalDistance;
+        bestPath = [current, ...result.path];
       }
-    });
-  }
-
-  // Reconstruct path
-  const path: string[] = [];
-  let current = end;
+    }
+    
+    const result = { distance: minDistance, path: bestPath };
+    memo[key] = result;
+    return result;
+  };
   
-  if (previous[current] || current === start) {
-    while (current) {
-      path.unshift(current);
-      if (current === start) break;
-      current = previous[current];
-    }
-  }
-
-  const pathCost = calculatePathCost(path, graph);
-
+  const result = dp(start, new Set());
+  
   return {
-    path,
-    distance: pathCost,
-    time: pathCost * 0.5,
+    path: result.path,
+    distance: result.distance === Infinity ? 0 : result.distance,
+    time: (result.distance === Infinity ? 0 : result.distance) * 0.5,
   };
 };
 
-// Floyd-Warshall algorithm
-const floydWarshall = (graph: Graph, start: string, end: string): { path: string[]; distance: number; time: number } => {
-  const nodeIds = Object.keys(graph.nodes);
-  const distances: Record<string, Record<string, number>> = {};
-  const next: Record<string, Record<string, string>> = {};
-
-  // Initialize distance matrix
-  nodeIds.forEach(i => {
-    distances[i] = {};
-    next[i] = {};
-    nodeIds.forEach(j => {
-      distances[i][j] = i === j ? 0 : Infinity;
-      next[i][j] = j;
-    });
-  });
-
-  // Fill in direct edges
-  graph.edges.forEach(edge => {
-    distances[edge.from][edge.to] = edge.weight;
-  });
-
-  // Floyd-Warshall main loop
-  nodeIds.forEach(k => {
-    nodeIds.forEach(i => {
-      nodeIds.forEach(j => {
-        if (distances[i][k] + distances[k][j] < distances[i][j]) {
-          distances[i][j] = distances[i][k] + distances[k][j];
-          next[i][j] = next[i][k];
-        }
-      });
-    });
-  });
-
-  // Reconstruct path
-  const path: string[] = [];
-  if (distances[start][end] === Infinity) {
-    return { path: [], distance: 0, time: 0 };
-  }
-
+// Nearest Neighbor algorithm
+const nearestNeighbor = (graph: Graph, start: string, end: string): { path: string[]; distance: number; time: number } => {
+  const visited: Set<string> = new Set();
+  const path: string[] = [start];
   let current = start;
-  path.push(current);
+  let totalDistance = 0;
+  
+  visited.add(start);
   
   while (current !== end) {
-    current = next[current][end];
-    path.push(current);
+    // Find nearest unvisited neighbor
+    const neighbors = graph.edges
+      .filter(edge => edge.from === current && !visited.has(edge.to))
+      .map(edge => ({ node: edge.to, weight: edge.weight }))
+      .sort((a, b) => a.weight - b.weight);
+    
+    if (neighbors.length === 0) {
+      // No unvisited neighbors, try to reach end directly if possible
+      const directEdge = graph.edges.find(edge => edge.from === current && edge.to === end);
+      if (directEdge) {
+        path.push(end);
+        totalDistance += directEdge.weight;
+        break;
+      } else {
+        // No path found
+        break;
+      }
+    }
+    
+    const nearest = neighbors[0];
+    path.push(nearest.node);
+    totalDistance += nearest.weight;
+    visited.add(nearest.node);
+    current = nearest.node;
   }
-
-  const pathCost = distances[start][end];
-
+  
   return {
     path,
-    distance: pathCost,
-    time: pathCost * 0.5,
+    distance: totalDistance,
+    time: totalDistance * 0.5,
+  };
+};
+
+// Branch and Bound algorithm
+const branchAndBound = (graph: Graph, start: string, end: string): { path: string[]; distance: number; time: number } => {
+  interface State {
+    current: string;
+    path: string[];
+    cost: number;
+    visited: Set<string>;
+  }
+  
+  const queue: State[] = [{
+    current: start,
+    path: [start],
+    cost: 0,
+    visited: new Set([start])
+  }];
+  
+  let bestSolution: { path: string[]; distance: number } | null = null;
+  let upperBound = Infinity;
+  
+  while (queue.length > 0) {
+    // Sort by cost + heuristic (distance to end)
+    queue.sort((a, b) => {
+      const heuristicA = calculateDistance(graph.nodes[a.current], graph.nodes[end]);
+      const heuristicB = calculateDistance(graph.nodes[b.current], graph.nodes[end]);
+      return (a.cost + heuristicA) - (b.cost + heuristicB);
+    });
+    
+    const state = queue.shift()!;
+    
+    // Prune if cost exceeds upper bound
+    if (state.cost >= upperBound) {
+      continue;
+    }
+    
+    if (state.current === end) {
+      if (state.cost < upperBound) {
+        upperBound = state.cost;
+        bestSolution = { path: state.path, distance: state.cost };
+      }
+      continue;
+    }
+    
+    // Expand neighbors
+    const neighbors = graph.edges.filter(edge => 
+      edge.from === state.current && !state.visited.has(edge.to)
+    );
+    
+    for (const edge of neighbors) {
+      const newVisited = new Set(state.visited);
+      newVisited.add(edge.to);
+      
+      queue.push({
+        current: edge.to,
+        path: [...state.path, edge.to],
+        cost: state.cost + edge.weight,
+        visited: newVisited
+      });
+    }
+  }
+  
+  return {
+    path: bestSolution?.path || [],
+    distance: bestSolution?.distance || 0,
+    time: (bestSolution?.distance || 0) * 0.5,
   };
 };
 
@@ -330,20 +301,20 @@ export const runGraphSimulation = (
   
   let result;
   switch (algorithm) {
-    case 'dijkstra':
-      result = dijkstra(graph, start, end);
+    case 'brute-force':
+      result = bruteForce(graph, start, end);
       break;
-    case 'astar':
-      result = astar(graph, start, end);
+    case 'dynamic-programming':
+      result = dynamicProgramming(graph, start, end);
       break;
-    case 'bellman-ford':
-      result = bellmanFord(graph, start, end);
+    case 'nearest-neighbor':
+      result = nearestNeighbor(graph, start, end);
       break;
-    case 'floyd-warshall':
-      result = floydWarshall(graph, start, end);
+    case 'branch-and-bound':
+      result = branchAndBound(graph, start, end);
       break;
     default:
-      result = dijkstra(graph, start, end);
+      result = nearestNeighbor(graph, start, end);
   }
 
   const { path, distance, time } = result;

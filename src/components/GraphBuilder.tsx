@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import ReactFlow, {
   Background,
@@ -39,7 +38,7 @@ interface GraphBuilderProps {
 
 const GraphBuilder: React.FC<GraphBuilderProps> = ({ 
   onSaveGraph, 
-  mapType = 'city', 
+  mapType = 'karnataka', 
   showControls = false,
   isEmbedded = false,
   params,
@@ -54,7 +53,7 @@ const GraphBuilder: React.FC<GraphBuilderProps> = ({
   const [edgeWeight, setEdgeWeight] = useState<string>('1');
   const [startNode, setStartNode] = useState<string>('');
   const [endNode, setEndNode] = useState<string>('');
-  const [algorithm, setAlgorithm] = useState<Algorithm>('dijkstra');
+  const [algorithm, setAlgorithm] = useState<Algorithm>('nearest-neighbor');
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [compareAlgorithm, setCompareAlgorithm] = useState<Algorithm | null>(null);
   const [compareResult, setCompareResult] = useState<SimulationResult | null>(null);
@@ -499,10 +498,10 @@ const GraphBuilder: React.FC<GraphBuilderProps> = ({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="dijkstra">Dijkstra</SelectItem>
-                    <SelectItem value="astar">A*</SelectItem>
-                    <SelectItem value="bellman-ford">Bellman-Ford</SelectItem>
-                    <SelectItem value="floyd-warshall">Floyd-Warshall</SelectItem>
+                    <SelectItem value="brute-force">Brute Force</SelectItem>
+                    <SelectItem value="dynamic-programming">Dynamic Programming</SelectItem>
+                    <SelectItem value="nearest-neighbor">Nearest Neighbor</SelectItem>
+                    <SelectItem value="branch-and-bound">Branch and Bound</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -515,14 +514,14 @@ const GraphBuilder: React.FC<GraphBuilderProps> = ({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {["dijkstra", "astar", "bellman-ford", "floyd-warshall"]
+                    {["brute-force", "dynamic-programming", "nearest-neighbor", "branch-and-bound"]
                       .filter(algo => algo !== algorithm)
                       .map(algo => (
                         <SelectItem key={algo} value={algo}>
-                          {algo === "dijkstra" ? "Dijkstra" : 
-                           algo === "astar" ? "A*" : 
-                           algo === "bellman-ford" ? "Bellman-Ford" : 
-                           "Floyd-Warshall"}
+                          {algo === "brute-force" ? "Brute Force" : 
+                           algo === "dynamic-programming" ? "Dynamic Programming" : 
+                           algo === "nearest-neighbor" ? "Nearest Neighbor" : 
+                           "Branch and Bound"}
                         </SelectItem>
                       ))}
                   </SelectContent>

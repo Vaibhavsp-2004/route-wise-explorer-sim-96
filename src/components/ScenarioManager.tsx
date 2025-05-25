@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,12 +29,12 @@ const exampleScenarios: Scenario[] = [
     name: 'Urban Rush Hour',
     description: 'Simulates heavy traffic conditions in a city during peak hours. Tests how algorithms handle high-congestion scenarios.',
     params: {
-      algorithm: 'dijkstra',
-      mapType: 'city',
+      algorithm: 'nearest-neighbor',
+      mapType: 'bengaluru',
       weather: 'rainy',
       timeOfDay: 'morning',
-      startLocation: 'city-downtown',
-      endLocation: 'city-airport',
+      startLocation: 'b1',
+      endLocation: 'b4',
       vehicle: 'car'
     },
     createdAt: new Date().toISOString(),
@@ -44,14 +43,14 @@ const exampleScenarios: Scenario[] = [
   {
     id: 'example-2',
     name: 'Emergency Route',
-    description: 'Emergency vehicle routing in adverse weather. Compares A* vs Dijkstra for time-critical scenarios.',
+    description: 'Emergency vehicle routing in adverse weather. Compares Dynamic Programming vs Nearest Neighbor for time-critical scenarios.',
     params: {
-      algorithm: 'astar',
-      mapType: 'city',
+      algorithm: 'dynamic-programming',
+      mapType: 'bengaluru',
       weather: 'foggy',
       timeOfDay: 'night',
-      startLocation: 'city-hospital',
-      endLocation: 'city-residential',
+      startLocation: 'b1',
+      endLocation: 'b5',
       vehicle: 'ambulance'
     },
     createdAt: new Date().toISOString(),
@@ -59,15 +58,15 @@ const exampleScenarios: Scenario[] = [
   },
   {
     id: 'example-3',
-    name: 'Rural Delivery',
-    description: 'Long-distance delivery in rural areas with elevation changes. Tests algorithm efficiency on sparse networks.',
+    name: 'Karnataka Long Distance',
+    description: 'Long-distance delivery across Karnataka. Tests algorithm efficiency on sparse networks.',
     params: {
-      algorithm: 'bellman-ford',
-      mapType: 'rural',
+      algorithm: 'branch-and-bound',
+      mapType: 'karnataka',
       weather: 'sunny',
       timeOfDay: 'afternoon',
-      startLocation: 'rural-town',
-      endLocation: 'rural-farm',
+      startLocation: 'k1',
+      endLocation: 'k8',
       vehicle: 'truck'
     },
     createdAt: new Date().toISOString(),
@@ -75,15 +74,15 @@ const exampleScenarios: Scenario[] = [
   },
   {
     id: 'example-4',
-    name: 'Mountain Eco Route',
-    description: 'Electric vehicle routing through mountainous terrain. Optimizes for energy efficiency and range.',
+    name: 'Mysuru Eco Route',
+    description: 'Electric vehicle routing through Mysuru. Optimizes for energy efficiency and range.',
     params: {
-      algorithm: 'astar',
-      mapType: 'mountain',
+      algorithm: 'brute-force',
+      mapType: 'mysuru',
       weather: 'windy',
       timeOfDay: 'evening',
-      startLocation: 'mountain-base',
-      endLocation: 'mountain-peak',
+      startLocation: 'm1',
+      endLocation: 'm6',
       vehicle: 'ev'
     },
     createdAt: new Date().toISOString(),
