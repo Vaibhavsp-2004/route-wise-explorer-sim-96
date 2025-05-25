@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Save, X, Play } from 'lucide-react';
+import { Save, X, Play, Info } from 'lucide-react';
 import { SimulationParams } from '../types';
 import { toast } from '@/components/ui/sonner';
 
@@ -13,6 +13,8 @@ interface Scenario {
   name: string;
   params: SimulationParams;
   createdAt: string;
+  description?: string;
+  isExample?: boolean;
 }
 
 interface ScenarioManagerProps {
@@ -21,6 +23,74 @@ interface ScenarioManagerProps {
   onRunSimulation: () => void;
 }
 
+// Example scenarios with explanations
+const exampleScenarios: Scenario[] = [
+  {
+    id: 'example-1',
+    name: 'Urban Rush Hour',
+    description: 'Simulates heavy traffic conditions in a city during peak hours. Tests how algorithms handle high-congestion scenarios.',
+    params: {
+      algorithm: 'dijkstra',
+      mapType: 'city',
+      weather: 'rainy',
+      timeOfDay: 'morning',
+      startLocation: 'city-downtown',
+      endLocation: 'city-airport',
+      vehicle: 'car'
+    },
+    createdAt: new Date().toISOString(),
+    isExample: true
+  },
+  {
+    id: 'example-2',
+    name: 'Emergency Route',
+    description: 'Emergency vehicle routing in adverse weather. Compares A* vs Dijkstra for time-critical scenarios.',
+    params: {
+      algorithm: 'astar',
+      mapType: 'city',
+      weather: 'foggy',
+      timeOfDay: 'night',
+      startLocation: 'city-hospital',
+      endLocation: 'city-residential',
+      vehicle: 'ambulance'
+    },
+    createdAt: new Date().toISOString(),
+    isExample: true
+  },
+  {
+    id: 'example-3',
+    name: 'Rural Delivery',
+    description: 'Long-distance delivery in rural areas with elevation changes. Tests algorithm efficiency on sparse networks.',
+    params: {
+      algorithm: 'bellman-ford',
+      mapType: 'rural',
+      weather: 'sunny',
+      timeOfDay: 'afternoon',
+      startLocation: 'rural-town',
+      endLocation: 'rural-farm',
+      vehicle: 'truck'
+    },
+    createdAt: new Date().toISOString(),
+    isExample: true
+  },
+  {
+    id: 'example-4',
+    name: 'Mountain Eco Route',
+    description: 'Electric vehicle routing through mountainous terrain. Optimizes for energy efficiency and range.',
+    params: {
+      algorithm: 'astar',
+      mapType: 'mountain',
+      weather: 'windy',
+      timeOfDay: 'evening',
+      startLocation: 'mountain-base',
+      endLocation: 'mountain-peak',
+      vehicle: 'ev'
+    },
+    createdAt: new Date().toISOString(),
+    isExample: true
+  }
+];
+
 const ScenarioManager: React.FC<ScenarioManagerProps> = ({ 
   currentParams, 
   onLoadScenario,
@@ -28,23 +98,30 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
 }) => {
   const [scenarios, setScenarios] = useState<Scenario[]>([]);
   const [scenarioName, setScenarioName] = useState('');
+  const [expandedExample, setExpandedExample] = useState<string | null>(null);
 
   // Load scenarios from localStorage on component mount
   useEffect(() => {
     const savedScenarios = localStorage.getItem('daa-scenarios');
+    let userScenarios: Scenario[] = [];
+    
     if (savedScenarios) {
       try {
-        setScenarios(JSON.parse(savedScenarios));
+        userScenarios = JSON.parse(savedScenarios);
       } catch (error) {
         console.error('Error loading scenarios:', error);
         toast.error('Failed to load saved scenarios');
       }
     }
+    
+    // Combine example scenarios with user scenarios
+    setScenarios([...exampleScenarios, ...userScenarios]);
   }, []);
 
-  // Save scenarios to localStorage whenever they change
+  // Save only user scenarios to localStorage
   useEffect(() => {
-    localStorage.setItem('daa-scenarios', JSON.stringify(scenarios));
+    const userScenarios = scenarios.filter(s => !s.isExample);
+    localStorage.setItem('daa-scenarios', JSON.stringify(userScenarios));
   }, [scenarios]);
 
   const handleSaveScenario = () => {
@@ -53,8 +130,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
       return;
     }
 
-    // Check if a scenario with this name already exists
-    const existingIndex = scenarios.findIndex(s => s.name === scenarioName);
+    // Check if a user scenario with this name already exists
+    const existingIndex = scenarios.findIndex(s => s.name === scenarioName && !s.isExample);
     
     if (existingIndex >= 0) {
       // Update existing scenario
@@ -73,7 +150,8 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
         id: `scenario-${Date.now()}`,
         name: scenarioName,
         params: currentParams,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        isExample: false
       };
       
       setScenarios([...scenarios, newScenario]);
@@ -89,15 +167,25 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
   };
 
   const handleDeleteScenario = (id: string, name: string) => {
+    // Only allow deletion of user scenarios, not examples
+    const scenario = scenarios.find(s => s.id === id);
+    if (scenario?.isExample) {
+      toast.error('Cannot delete example scenarios');
+      return;
+    }
+    
     setScenarios(scenarios.filter(s => s.id !== id));
     toast.info(`Deleted scenario "${name}"`);
   };
 
   const handleRunScenario = (scenario: Scenario) => {
     onLoadScenario(scenario.params);
-    setTimeout(onRunSimulation, 100); // Small delay to ensure params are updated
+    setTimeout(onRunSimulation, 100);
     toast.success(`Running scenario "${scenario.name}"`);
   };
+
+  const userScenarios = scenarios.filter(s => !s.isExample);
+  const examples = scenarios.filter(s => s.isExample);
 
   return (
     <div className="flex flex-col h-full">
@@ -126,41 +214,41 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
         </CardContent>
       </Card>
 
-      <div className="flex-1 overflow-y-auto">
-        <h3 className="text-sidebar-foreground font-medium mb-2">Saved Scenarios</h3>
-        
-        {scenarios.length === 0 ? (
-          <p className="text-muted-foreground text-sm text-center py-8">
-            No scenarios saved yet. Configure a simulation and save it to start.
-          </p>
-        ) : (
+      <div className="flex-1 overflow-y-auto space-y-4">
+        {/* Example Scenarios Section */}
+        <div>
+          <h3 className="text-sidebar-foreground font-medium mb-2">Example Scenarios</h3>
           <div className="space-y-2">
-            {scenarios.map((scenario) => (
+            {examples.map((scenario) => (
               <Card 
                 key={scenario.id} 
                 className="bg-sidebar-accent border-sidebar-border"
               >
                 <CardContent className="p-3">
-                  <div className="flex justify-between items-center mb-1">
+                  <div className="flex justify-between items-start mb-1">
                     <h4 className="font-medium text-sidebar-foreground">{scenario.name}</h4>
                     <Button 
                       variant="ghost" 
                       size="icon" 
-                      className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                      onClick={() => handleDeleteScenario(scenario.id, scenario.name)}
+                      className="h-6 w-6 text-muted-foreground hover:text-sidebar-foreground"
+                      onClick={() => setExpandedExample(
+                        expandedExample === scenario.id ? null : scenario.id
+                      )}
                     >
-                      <X className="h-4 w-4" />
+                      <Info className="h-4 w-4" />
                     </Button>
                   </div>
                   
-                  <div className="text-xs text-muted-foreground mb-2">
-                    {new Date(scenario.createdAt).toLocaleString()}
-                  </div>
+                  {expandedExample === scenario.id && (
+                    <div className="text-xs text-muted-foreground mb-2 p-2 bg-background/50 rounded">
+                      {scenario.description}
+                    </div>
+                  )}
                   
                   <div className="text-xs text-sidebar-foreground mb-2">
                     <div>Algorithm: {scenario.params.algorithm}</div>
                     <div>Map: {scenario.params.mapType}</div>
-                    <div>Conditions: {scenario.params.weather}, {scenario.params.timeOfDay}</div>
+                    <div>Vehicle: {scenario.params.vehicle}</div>
                   </div>
                   
                   <div className="flex gap-2 mt-2">
@@ -184,7 +272,69 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
               </Card>
             ))}
           </div>
-        )}
+        </div>
+
+        {/* User Scenarios Section */}
+        <div>
+          <h3 className="text-sidebar-foreground font-medium mb-2">My Scenarios</h3>
+          
+          {userScenarios.length === 0 ? (
+            <p className="text-muted-foreground text-sm text-center py-8">
+              No scenarios saved yet. Configure a simulation and save it to start.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {userScenarios.map((scenario) => (
+                <Card 
+                  key={scenario.id} 
+                  className="bg-sidebar-accent border-sidebar-border"
+                >
+                  <CardContent className="p-3">
+                    <div className="flex justify-between items-center mb-1">
+                      <h4 className="font-medium text-sidebar-foreground">{scenario.name}</h4>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                        onClick={() => handleDeleteScenario(scenario.id, scenario.name)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="text-xs text-muted-foreground mb-2">
+                      {new Date(scenario.createdAt).toLocaleString()}
+                    </div>
+                    
+                    <div className="text-xs text-sidebar-foreground mb-2">
+                      <div>Algorithm: {scenario.params.algorithm}</div>
+                      <div>Map: {scenario.params.mapType}</div>
+                      <div>Conditions: {scenario.params.weather}, {scenario.params.timeOfDay}</div>
+                    </div>
+                    
+                    <div className="flex gap-2 mt-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        className="w-full text-xs"
+                        onClick={() => handleLoadScenario(scenario)}
+                      >
+                        Load
+                      </Button>
+                      <Button 
+                        size="sm"
+                        className="w-full bg-sidebar-primary hover:bg-sidebar-primary/90 text-xs flex items-center gap-1"
+                        onClick={() => handleRunScenario(scenario)}
+                      >
+                        <Play className="h-3 w-3" /> Run
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

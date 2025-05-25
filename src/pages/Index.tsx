@@ -32,7 +32,7 @@ const Index = () => {
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [compareAlgorithm, setCompareAlgorithm] = useState<Algorithm | null>(null);
   const [compareResult, setCompareResult] = useState<SimulationResult | null>(null);
-  const [activeTab, setActiveTab] = useState<MapType>('city');
+  const [viewMode, setViewMode] = useState<'simulation' | 'graph'>('simulation');
   const [sidebarTab, setSidebarTab] = useState('simulation');
   
   // Handle running the simulation
@@ -94,19 +94,6 @@ const Index = () => {
       setCompareResult(null);
     }
   }, [params.algorithm, compareAlgorithm]);
-  
-  // Handle tab change
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab as MapType);
-    
-    // Update map type and reset locations
-    setParams(prev => ({
-      ...prev,
-      mapType: tab as MapType,
-      startLocation: mapLocations[tab as MapType][0].id,
-      endLocation: mapLocations[tab as MapType][1].id
-    }));
-  };
 
   // Generate and download PDF using our utility
   const handleDownloadPDF = () => {
@@ -160,17 +147,16 @@ const Index = () => {
             </div>
           </div>
 
-          {sidebarTab !== 'graphBuilder' && (
+          {/* View Mode Tabs */}
+          <Tabs defaultValue="simulation" value={viewMode} onValueChange={(value) => setViewMode(value as 'simulation' | 'graph')} className="w-full">
+            <TabsList className="grid grid-cols-2">
+              <TabsTrigger value="simulation">Simulation View</TabsTrigger>
+              <TabsTrigger value="graph">Graph Builder</TabsTrigger>
+            </TabsList>
+          </Tabs>
+          
+          {viewMode === 'simulation' && (
             <>
-              {/* Map type tabs */}
-              <Tabs defaultValue="city" value={activeTab} onValueChange={handleTabChange} className="w-full">
-                <TabsList className="grid grid-cols-3">
-                  <TabsTrigger value="city">City Map</TabsTrigger>
-                  <TabsTrigger value="rural">Rural Map</TabsTrigger>
-                  <TabsTrigger value="mountain">Mountain Map</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              
               {/* Algorithm comparison selector */}
               <div className="bg-muted/40 p-4 rounded-md border">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -213,7 +199,7 @@ const Index = () => {
           <div id="pdf-content" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="h-[400px]">
-                {sidebarTab === 'graphBuilder' ? (
+                {viewMode === 'graph' ? (
                   <GraphBuilder isEmbedded={true} />
                 ) : (
                   <MapView 
@@ -227,13 +213,19 @@ const Index = () => {
                 )}
               </div>
               <div>
-                {sidebarTab !== 'graphBuilder' && (
+                {viewMode === 'simulation' && (
                   <ComparisonTable result={result} compareResult={compareResult} />
+                )}
+                {viewMode === 'graph' && result && compareResult && (
+                  <div>
+                    <h3 className="text-lg font-medium mb-3">Graph Algorithm Comparison</h3>
+                    <ComparisonTable result={result} compareResult={compareResult} />
+                  </div>
                 )}
               </div>
             </div>
             
-            {sidebarTab !== 'graphBuilder' && (
+            {viewMode === 'simulation' && (
               <div className="mt-8">
                 <AlgorithmExplanation 
                   algorithm={params.algorithm as Algorithm} 
