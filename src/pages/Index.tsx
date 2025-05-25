@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import TabbedSidebar from '../components/TabbedSidebar';
@@ -197,11 +196,16 @@ const Index = () => {
           )}
           
           <div id="pdf-content" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="h-[400px]">
-                {viewMode === 'graph' ? (
-                  <GraphBuilder isEmbedded={true} />
-                ) : (
+            {viewMode === 'graph' ? (
+              <div className="h-[600px]">
+                <GraphBuilder 
+                  isEmbedded={false}
+                  showControls={true}
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="h-[400px]">
                   <MapView 
                     mapType={params.mapType as MapType} 
                     result={result} 
@@ -210,32 +214,24 @@ const Index = () => {
                     endLocation={params.endLocation}
                     showCompare={!!compareAlgorithm && !!compareResult}
                   />
-                )}
-              </div>
-              <div>
-                {viewMode === 'simulation' && (
+                </div>
+                <div>
                   <ComparisonTable result={result} compareResult={compareResult} />
-                )}
-                {viewMode === 'graph' && result && compareResult && (
-                  <div>
-                    <h3 className="text-lg font-medium mb-3">Graph Algorithm Comparison</h3>
-                    <ComparisonTable result={result} compareResult={compareResult} />
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {viewMode === 'simulation' && (
-              <div className="mt-8">
-                <AlgorithmExplanation 
-                  algorithm={params.algorithm as Algorithm} 
-                  result={result}
-                  compareAlgorithm={compareAlgorithm as Algorithm | undefined}
-                  compareResult={compareResult}
-                />
+                </div>
               </div>
             )}
           </div>
+          
+          {viewMode === 'simulation' && (
+            <div className="mt-8">
+              <AlgorithmExplanation 
+                algorithm={params.algorithm as Algorithm} 
+                result={result}
+                compareAlgorithm={compareAlgorithm as Algorithm | undefined}
+                compareResult={compareResult}
+              />
+            </div>
+          )}
         </div>
       </main>
     </div>
