@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import ReactFlow, {
   Background,
@@ -539,6 +538,7 @@ const GraphBuilder: React.FC<GraphBuilderProps> = ({
                       <p><span className="font-medium">Distance:</span> {result.metrics.distance.toFixed(2)}m</p>
                       <p><span className="font-medium">Time:</span> {result.metrics.time.toFixed(2)}s</p>
                       <p><span className="font-medium">Cost:</span> {result.metrics.cost.toFixed(2)}</p>
+                      <p><span className="font-medium">Path Length:</span> {result.path.length} nodes</p>
                       <p><span className="font-medium">Path:</span></p>
                       <p className="text-xs bg-white p-2 rounded border">
                         {result.path.length > 0 ? result.path.join(' → ') : 'No path found'}
@@ -556,6 +556,7 @@ const GraphBuilder: React.FC<GraphBuilderProps> = ({
                       <p><span className="font-medium">Distance:</span> {compareResult.metrics.distance.toFixed(2)}m</p>
                       <p><span className="font-medium">Time:</span> {compareResult.metrics.time.toFixed(2)}s</p>
                       <p><span className="font-medium">Cost:</span> {compareResult.metrics.cost.toFixed(2)}</p>
+                      <p><span className="font-medium">Path Length:</span> {compareResult.path.length} nodes</p>
                       <p><span className="font-medium">Path:</span></p>
                       <p className="text-xs bg-white p-2 rounded border">
                         {compareResult.path.length > 0 ? compareResult.path.join(' → ') : 'No path found'}
@@ -570,6 +571,7 @@ const GraphBuilder: React.FC<GraphBuilderProps> = ({
                     <div className="text-sm space-y-1">
                       <p><span className="font-medium">Distance Difference:</span> {Math.abs(result.metrics.distance - compareResult.metrics.distance).toFixed(2)}m</p>
                       <p><span className="font-medium">Time Difference:</span> {Math.abs(result.metrics.time - compareResult.metrics.time).toFixed(2)}s</p>
+                      <p><span className="font-medium">Path Length Difference:</span> {Math.abs(result.path.length - compareResult.path.length)} nodes</p>
                       <p><span className="font-medium">Better Algorithm:</span> {
                         result.metrics.distance <= compareResult.metrics.distance ? 
                         result.algorithm.toUpperCase() : 
