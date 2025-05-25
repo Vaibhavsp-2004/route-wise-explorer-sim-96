@@ -44,10 +44,18 @@ const getRouteCoordinates = (path: string[], locations: Record<string, Location>
   });
 };
 
-// Get a map of all locations by ID
+// Get a map of all locations by ID - with safety check
 const getLocationsMap = (mapType: MapType): Record<string, Location> => {
   const locationsMap: Record<string, Location> = {};
-  mapLocations[mapType].forEach(location => {
+  const locations = mapLocations[mapType];
+  
+  // Safety check to ensure locations exist
+  if (!locations || !Array.isArray(locations)) {
+    console.error(`No locations found for mapType: ${mapType}`);
+    return {};
+  }
+  
+  locations.forEach(location => {
     locationsMap[location.id] = location;
   });
   return locationsMap;
@@ -82,7 +90,7 @@ const MapView = ({
   const center = getMapCenter(mapType);
   const zoom = getMapZoom(mapType);
   const locationsMap = getLocationsMap(mapType);
-  const locations = mapLocations[mapType];
+  const locations = mapLocations[mapType] || [];
   
   // Update route when result changes
   useEffect(() => {
@@ -152,9 +160,9 @@ const MapView = ({
           {routePath.length > 0 && (
             <Polyline 
               positions={routePath} 
-              color={result?.algorithm === 'dijkstra' ? '#3B82F6' : 
-                    result?.algorithm === 'astar' ? '#10B981' : 
-                    result?.algorithm === 'bellman-ford' ? '#8B5CF6' : 
+              color={result?.algorithm === 'brute-force' ? '#3B82F6' : 
+                    result?.algorithm === 'dynamic-programming' ? '#10B981' : 
+                    result?.algorithm === 'nearest-neighbor' ? '#8B5CF6' : 
                     '#F59E0B'}
               weight={5}
               opacity={0.8}
@@ -166,9 +174,9 @@ const MapView = ({
           {showCompare && compareRoutePath.length > 0 && (
             <Polyline 
               positions={compareRoutePath} 
-              color={compareResult?.algorithm === 'dijkstra' ? '#3B82F6' : 
-                    compareResult?.algorithm === 'astar' ? '#10B981' : 
-                    compareResult?.algorithm === 'bellman-ford' ? '#8B5CF6' : 
+              color={compareResult?.algorithm === 'brute-force' ? '#3B82F6' : 
+                    compareResult?.algorithm === 'dynamic-programming' ? '#10B981' : 
+                    compareResult?.algorithm === 'nearest-neighbor' ? '#8B5CF6' : 
                     '#F59E0B'}
               weight={5}
               opacity={0.6}
