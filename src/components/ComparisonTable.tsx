@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,7 +49,7 @@ const ComparisonTable = ({ result, compareResult }: ComparisonTableProps) => {
   
   const formatCost = (cost: number): string => {
     if (cost === 0) return '-';
-    return `$${cost.toFixed(2)}`;
+    return `₹${cost.toFixed(2)}`;
   };
   
   const getScoreColor = (score: number): string => {
