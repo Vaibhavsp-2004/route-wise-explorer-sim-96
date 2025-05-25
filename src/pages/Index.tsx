@@ -197,7 +197,7 @@ const Index = () => {
           
           <div id="pdf-content" className="space-y-6">
             {viewMode === 'graph' ? (
-              <div className="h-[600px]">
+              <div className="h-[800px]">
                 <GraphBuilder 
                   isEmbedded={false}
                   showControls={true}

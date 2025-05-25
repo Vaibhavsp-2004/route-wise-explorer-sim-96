@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import ReactFlow, {
   Background,
@@ -199,13 +200,24 @@ const GraphBuilder: React.FC<GraphBuilderProps> = ({
       const simulationResult = runGraphSimulation(algorithm, nodes, edges, startNode, endNode);
       setResult(simulationResult);
       
-      // Highlight path in the graph
-      highlightPath(simulationResult.path);
+      // Highlight path in the graph using node IDs for visual highlighting
+      const nodeIds = simulationResult.path.map(label => {
+        const node = nodes.find(n => n.data.label === label);
+        return node ? node.id : null;
+      }).filter(id => id !== null) as string[];
+      
+      highlightPath(nodeIds);
       
       if (compareAlgorithm && compareAlgorithm !== algorithm) {
         const comparisonResult = runGraphSimulation(compareAlgorithm, nodes, edges, startNode, endNode);
         setCompareResult(comparisonResult);
-        highlightComparePath(comparisonResult.path);
+        
+        const compareNodeIds = comparisonResult.path.map(label => {
+          const node = nodes.find(n => n.data.label === label);
+          return node ? node.id : null;
+        }).filter(id => id !== null) as string[];
+        
+        highlightComparePath(compareNodeIds);
       }
       
       toast.success('Graph simulation completed!');
@@ -362,7 +374,7 @@ const GraphBuilder: React.FC<GraphBuilderProps> = ({
 
   const flowStyles = isEmbedded 
     ? { height: '100%', width: '100%' } 
-    : { height: '500px', width: '100%' };
+    : { height: '700px', width: '100%' }; // Increased height from 500px to 700px
 
   const nodeOptions = nodes.map(node => ({
     id: node.id,
@@ -592,8 +604,8 @@ const GraphBuilder: React.FC<GraphBuilderProps> = ({
         </div>
       )}
       
-      {/* Graph Visualization */}
-      <div className="flex-1 border rounded-md overflow-hidden">
+      {/* Graph Visualization - Increased size */}
+      <div className="flex-1 border rounded-md overflow-hidden" style={{ minHeight: isEmbedded ? '600px' : '700px' }}>
         <ReactFlow
           nodes={nodes}
           edges={edges}
