@@ -49,38 +49,38 @@
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 11%;
+    --card: 222 47% 13%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 11%;
+    --popover: 222 47% 13%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 100% 50%;
+    --primary: 210 100% 60%;
     --primary-foreground: 222 47% 11%;
 
-    --secondary: 160 84% 39%;
+    --secondary: 160 84% 45%;
     --secondary-foreground: 210 40% 98%;
 
     --muted: 217 33% 17.5%;
-    --muted-foreground: 215 20% 65%;
+    --muted-foreground: 215 20% 70%;
 
-    --accent: 265 84% 64%;
+    --accent: 265 84% 70%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 63% 31%;
+    --destructive: 0 63% 50%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217 33% 17.5%;
-    --input: 217 33% 17.5%;
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
     --ring: 213 27% 84%;
 
-    --sidebar-background: 222 47% 12%;
+    --sidebar-background: 222 47% 8%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 210 100% 50%;
+    --sidebar-primary: 210 100% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 47% 16%;
+    --sidebar-accent: 222 47% 12%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 47% 20%;
+    --sidebar-border: 222 47% 18%;
     --sidebar-ring: 217 91% 60%;
   }
 }
@@ -93,6 +93,30 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Enhanced dark theme styling */
+  .dark {
+    color-scheme: dark;
+  }
+
+  .dark .leaflet-control-zoom a {
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    border-color: hsl(var(--border));
+  }
+
+  .dark .leaflet-control-zoom a:hover {
+    background-color: hsl(var(--accent));
+  }
+
+  .dark .leaflet-popup-content-wrapper {
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+  }
+
+  .dark .leaflet-popup-tip {
+    background-color: hsl(var(--card));
+  }
 }
 
 /* Leaflet Map CSS */
@@ -101,6 +125,7 @@
   height: 100%;
   border-radius: 0.5rem;
   z-index: 0;
+  background-color: hsl(var(--muted));
 }
 
 /* Import Leaflet CSS */
@@ -116,4 +141,30 @@
   to {
     stroke-dashoffset: 1000;
   }
+}
+
+/* Enhanced algorithm route styling for dark theme */
+.algorithm-compare-route {
+  transition: stroke-dashoffset 1s linear;
+  animation: dash-alt 2s linear forwards;
+  stroke-dasharray: 10,5;
+}
+
+@keyframes dash-alt {
+  to {
+    stroke-dashoffset: 500;
+  }
+}
+
+/* Dark theme enhancements for better contrast */
+.dark .bg-muted\/40 {
+  background-color: hsl(var(--muted) / 0.6);
+}
+
+.dark h1, .dark h2, .dark h3 {
+  color: hsl(var(--foreground));
+}
+
+.dark .text-muted-foreground {
+  color: hsl(var(--muted-foreground));
 }

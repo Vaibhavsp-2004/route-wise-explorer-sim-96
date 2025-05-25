@@ -1,30 +1,34 @@
 
 import { Location, MapType, RouteGraph } from "../types";
 
-// Location coordinates for different maps
+// Location coordinates for Karnataka, India
 export const mapLocations: Record<MapType, Location[]> = {
-  city: [
-    { id: "c1", name: "Downtown", lat: 40.7128, lng: -74.006 },
-    { id: "c2", name: "Central Park", lat: 40.7831, lng: -73.9712 },
-    { id: "c3", name: "Times Square", lat: 40.7580, lng: -73.9855 },
-    { id: "c4", name: "Brooklyn Bridge", lat: 40.7061, lng: -73.9969 },
-    { id: "c5", name: "Financial District", lat: 40.7075, lng: -74.0113 },
-    { id: "c6", name: "Chinatown", lat: 40.7157, lng: -73.9976 },
+  karnataka: [
+    { id: "k1", name: "Bengaluru", lat: 12.9716, lng: 77.5946 },
+    { id: "k2", name: "Mysuru", lat: 12.2958, lng: 76.6394 },
+    { id: "k3", name: "Mangaluru", lat: 12.9141, lng: 74.8560 },
+    { id: "k4", name: "Hubli", lat: 15.3647, lng: 75.1240 },
+    { id: "k5", name: "Belagavi", lat: 15.8497, lng: 74.4977 },
+    { id: "k6", name: "Kalaburagi", lat: 17.3297, lng: 76.8343 },
+    { id: "k7", name: "Davangere", lat: 14.4644, lng: 75.9932 },
+    { id: "k8", name: "Ballari", lat: 15.1394, lng: 76.9214 },
   ],
-  rural: [
-    { id: "r1", name: "Farmland North", lat: 41.2033, lng: -73.8503 },
-    { id: "r2", name: "River Crossing", lat: 41.1631, lng: -73.7647 },
-    { id: "r3", name: "Small Town", lat: 41.2565, lng: -73.6843 },
-    { id: "r4", name: "County Road 12", lat: 41.1952, lng: -73.5982 },
-    { id: "r5", name: "Old Mill", lat: 41.2879, lng: -73.6321 },
+  bengaluru: [
+    { id: "b1", name: "Majestic", lat: 12.9762, lng: 77.5993 },
+    { id: "b2", name: "Koramangala", lat: 12.9279, lng: 77.6271 },
+    { id: "b3", name: "Indiranagar", lat: 12.9719, lng: 77.6412 },
+    { id: "b4", name: "Whitefield", lat: 12.9698, lng: 77.7500 },
+    { id: "b5", name: "Electronic City", lat: 12.8456, lng: 77.6603 },
+    { id: "b6", name: "Hebbal", lat: 13.0358, lng: 77.5970 },
+    { id: "b7", name: "Jayanagar", lat: 12.9254, lng: 77.5946 },
   ],
-  mountain: [
-    { id: "m1", name: "Base Camp", lat: 42.0428, lng: -74.4018 },
-    { id: "m2", name: "Mid Mountain", lat: 42.1101, lng: -74.3672 },
-    { id: "m3", name: "North Peak", lat: 42.1573, lng: -74.3345 },
-    { id: "m4", name: "East Ridge", lat: 42.1302, lng: -74.2891 },
-    { id: "m5", name: "Valley View", lat: 42.0851, lng: -74.3211 },
-    { id: "m6", name: "South Pass", lat: 42.0394, lng: -74.3587 },
+  mysuru: [
+    { id: "m1", name: "Mysuru Palace", lat: 12.3051, lng: 76.6551 },
+    { id: "m2", name: "Chamundi Hills", lat: 12.2724, lng: 76.6730 },
+    { id: "m3", name: "KRS Dam", lat: 12.4244, lng: 76.5692 },
+    { id: "m4", name: "Brindavan Gardens", lat: 12.4244, lng: 76.5692 },
+    { id: "m5", name: "Mysuru Zoo", lat: 12.3009, lng: 76.6543 },
+    { id: "m6", name: "Infosys Mysuru", lat: 12.3372, lng: 76.6107 },
   ],
 };
 
@@ -43,8 +47,7 @@ export const getRouteGraph = (mapType: MapType): RouteGraph => {
     };
   });
 
-  // Create edges between nodes (simplified for this demo)
-  // In a real implementation, you'd have more realistic edge connections and weights
+  // Create edges between nodes
   for (let i = 0; i < locations.length; i++) {
     for (let j = i + 1; j < locations.length; j++) {
       // Calculate distance between two points using Haversine formula
@@ -68,19 +71,19 @@ export const getRouteGraph = (mapType: MapType): RouteGraph => {
       // Assign traffic factors based on map type
       let trafficFactor = 1.0; // Default
       
-      if (mapType === 'city') {
-        // Higher traffic in cities
-        trafficFactor = 1.5 + Math.random() * 2.5; 
-      } else if (mapType === 'rural') {
-        // Lower traffic in rural areas
-        trafficFactor = 1.0 + Math.random() * 0.5;
-      } else if (mapType === 'mountain') {
-        // Variable traffic in mountains, higher on main routes
-        trafficFactor = 1.2 + Math.random() * 0.8;
+      if (mapType === 'bengaluru') {
+        // Higher traffic in Bengaluru
+        trafficFactor = 2.0 + Math.random() * 2.0; 
+      } else if (mapType === 'karnataka') {
+        // Variable traffic across Karnataka
+        trafficFactor = 1.2 + Math.random() * 1.5;
+      } else if (mapType === 'mysuru') {
+        // Moderate traffic in Mysuru
+        trafficFactor = 1.1 + Math.random() * 0.8;
       }
 
       // Create bidirectional edges
-      const time = (distance / 1000) * 60 * trafficFactor; // minutes, considering 60 km/h avg speed and traffic
+      const time = (distance / 1000) * 60 * trafficFactor; // minutes, considering avg speed and traffic
       
       edges.push({
         from: locations[i].id,
@@ -107,27 +110,27 @@ export const getRouteGraph = (mapType: MapType): RouteGraph => {
 // Get map center coordinates based on map type
 export const getMapCenter = (mapType: MapType): [number, number] => {
   switch (mapType) {
-    case 'city':
-      return [40.7128, -74.006]; // New York City
-    case 'rural':
-      return [41.2033, -73.7647]; // Somewhere rural
-    case 'mountain':
-      return [42.0851, -74.3345]; // Mountain area
+    case 'karnataka':
+      return [14.5204, 75.7224]; // Karnataka center
+    case 'bengaluru':
+      return [12.9716, 77.5946]; // Bengaluru center
+    case 'mysuru':
+      return [12.2958, 76.6394]; // Mysuru center
     default:
-      return [40.7128, -74.006];
+      return [12.9716, 77.5946];
   }
 };
 
 // Get initial zoom level based on map type
 export const getMapZoom = (mapType: MapType): number => {
   switch (mapType) {
-    case 'city':
-      return 14;
-    case 'rural':
+    case 'karnataka':
+      return 7;
+    case 'bengaluru':
+      return 11;
+    case 'mysuru':
       return 12;
-    case 'mountain':
-      return 13;
     default:
-      return 13;
+      return 11;
   }
 };

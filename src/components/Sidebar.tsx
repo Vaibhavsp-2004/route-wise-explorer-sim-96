@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -11,7 +12,7 @@ interface SidebarProps {
   params: SimulationParams;
   setParams: React.Dispatch<React.SetStateAction<SimulationParams>>;
   onRunSimulation: () => void;
-  tabbed?: boolean; // New prop to indicate if being used in tabbed layout
+  tabbed?: boolean;
 }
 
 const Sidebar = ({ params, setParams, onRunSimulation, tabbed = false }: SidebarProps) => {
@@ -34,7 +35,6 @@ const Sidebar = ({ params, setParams, onRunSimulation, tabbed = false }: Sidebar
     }
   };
 
-  // If being used in tabbed mode, we don't need the outer container
   const content = (
     <>
       <Card className="bg-sidebar-accent border-sidebar-border">
@@ -54,10 +54,10 @@ const Sidebar = ({ params, setParams, onRunSimulation, tabbed = false }: Sidebar
                   <SelectValue placeholder="Select Algorithm" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="dijkstra">Dijkstra</SelectItem>
-                  <SelectItem value="astar">A*</SelectItem>
-                  <SelectItem value="bellman-ford">Bellman-Ford</SelectItem>
-                  <SelectItem value="floyd-warshall">Floyd-Warshall</SelectItem>
+                  <SelectItem value="brute-force">Brute Force</SelectItem>
+                  <SelectItem value="dynamic-programming">Dynamic Programming (Held-Karp)</SelectItem>
+                  <SelectItem value="nearest-neighbor">Nearest Neighbor (Greedy)</SelectItem>
+                  <SelectItem value="branch-and-bound">Branch and Bound</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -76,9 +76,9 @@ const Sidebar = ({ params, setParams, onRunSimulation, tabbed = false }: Sidebar
                   <SelectValue placeholder="Select Map" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="city">City (High Traffic)</SelectItem>
-                  <SelectItem value="rural">Rural (Low Density)</SelectItem>
-                  <SelectItem value="mountain">Mountainous (Elevation)</SelectItem>
+                  <SelectItem value="karnataka">Karnataka State</SelectItem>
+                  <SelectItem value="bengaluru">Bengaluru City</SelectItem>
+                  <SelectItem value="mysuru">Mysuru Region</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -205,16 +205,14 @@ const Sidebar = ({ params, setParams, onRunSimulation, tabbed = false }: Sidebar
     </>
   );
 
-  // If in tabbed mode, return just the content
   if (tabbed) {
     return content;
   }
 
-  // Otherwise wrap in the container
   return (
     <aside className="bg-sidebar p-4 rounded-lg w-80 flex flex-col gap-5 h-full max-h-screen overflow-y-auto">
       <div className="flex items-center justify-center mb-2">
-        <h2 className="text-sidebar-foreground text-2xl font-bold">RouteWise Explorer</h2>
+        <h2 className="text-sidebar-foreground text-2xl font-bold">Karnataka Route Explorer</h2>
       </div>
       {content}
     </aside>

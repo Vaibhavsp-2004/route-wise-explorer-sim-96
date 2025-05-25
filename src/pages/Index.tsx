@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import TabbedSidebar from '../components/TabbedSidebar';
@@ -17,14 +18,14 @@ import { Label } from '@/components/ui/label';
 import { exportToPDF } from '../utils/pdfExport';
 
 const Index = () => {
-  // Initialize simulation parameters
+  // Initialize simulation parameters with new defaults
   const [params, setParams] = useState<SimulationParams>({
-    algorithm: 'dijkstra',
-    mapType: 'city',
+    algorithm: 'nearest-neighbor',
+    mapType: 'karnataka',
     weather: 'sunny',
     timeOfDay: 'afternoon',
-    startLocation: mapLocations.city[0].id,
-    endLocation: mapLocations.city[1].id,
+    startLocation: mapLocations.karnataka[0].id,
+    endLocation: mapLocations.karnataka[1].id,
     vehicle: 'car',
   });
   
@@ -33,6 +34,11 @@ const Index = () => {
   const [compareResult, setCompareResult] = useState<SimulationResult | null>(null);
   const [viewMode, setViewMode] = useState<'simulation' | 'graph'>('simulation');
   const [sidebarTab, setSidebarTab] = useState('simulation');
+  
+  // Set dark theme on mount
+  useEffect(() => {
+    document.documentElement.classList.add('dark');
+  }, []);
   
   // Handle running the simulation
   const handleRunSimulation = () => {
@@ -113,7 +119,7 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen bg-background text-foreground">
       <TabbedSidebar 
         params={params} 
         setParams={setParams} 
@@ -123,7 +129,7 @@ const Index = () => {
       <main className="flex-1 p-4 overflow-y-auto">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h1 className="text-3xl font-bold text-foreground">DAA Algorithm Comparison Simulator</h1>
+            <h1 className="text-3xl font-bold text-foreground">Karnataka Route Optimization Simulator</h1>
             
             <div className="flex flex-wrap items-center gap-2">
               <Link 
@@ -174,13 +180,15 @@ const Index = () => {
                       <Label htmlFor="none">None</Label>
                     </div>
                     
-                    {["dijkstra", "astar", "bellman-ford", "floyd-warshall"].filter(algo => algo !== params.algorithm).map((algo) => (
+                    {["brute-force", "dynamic-programming", "nearest-neighbor", "branch-and-bound"].filter(algo => algo !== params.algorithm).map((algo) => (
                       <div key={algo} className="flex items-center space-x-2">
                         <RadioGroupItem value={algo} id={algo} />
-                        <Label htmlFor={algo}>{algo === "dijkstra" ? "Dijkstra" : 
-                                             algo === "astar" ? "A*" : 
-                                             algo === "bellman-ford" ? "Bellman-Ford" : 
-                                             "Floyd-Warshall"}</Label>
+                        <Label htmlFor={algo}>
+                          {algo === "brute-force" ? "Brute Force" : 
+                           algo === "dynamic-programming" ? "Dynamic Programming" : 
+                           algo === "nearest-neighbor" ? "Nearest Neighbor" : 
+                           "Branch and Bound"}
+                        </Label>
                       </div>
                     ))}
                   </RadioGroup>

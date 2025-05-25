@@ -15,6 +15,305 @@ const minDistance = (dist: Record<string, number>, visited: Record<string, boole
   return minIndex;
 };
 
+// Brute Force algorithm - exhaustive search
+export const bruteForce = (
+  graph: RouteGraph,
+  start: string,
+  end: string
+): { path: string[]; distance: number; time: number } => {
+  const { nodes } = graph;
+  const nodeIds = Object.keys(nodes);
+  
+  if (!nodeIds.includes(start) || !nodeIds.includes(end)) {
+    return { path: [], distance: 0, time: 0 };
+  }
+
+  let bestPath: string[] = [];
+  let bestDistance = Number.MAX_SAFE_INTEGER;
+  let bestTime = Number.MAX_SAFE_INTEGER;
+
+  // Generate all possible paths (simplified for performance)
+  const findAllPaths = (current: string, target: string, visited: Set<string>, path: string[]): void => {
+    if (current === target) {
+      const pathCost = calculatePathCost(path, graph);
+      const pathTime = calculatePathTime(path, graph);
+      
+      if (pathCost < bestDistance) {
+        bestDistance = pathCost;
+        bestTime = pathTime;
+        bestPath = [...path];
+      }
+      return;
+    }
+
+    if (path.length > 5) return; // Limit depth for performance
+
+    graph.edges
+      .filter(edge => edge.from === current && !visited.has(edge.to))
+      .forEach(edge => {
+        visited.add(edge.to);
+        path.push(edge.to);
+        findAllPaths(edge.to, target, visited, path);
+        path.pop();
+        visited.delete(edge.to);
+      });
+  };
+
+  const visited = new Set<string>([start]);
+  findAllPaths(start, end, visited, [start]);
+
+  return {
+    path: bestPath,
+    distance: bestDistance === Number.MAX_SAFE_INTEGER ? 0 : bestDistance,
+    time: bestTime === Number.MAX_SAFE_INTEGER ? 0 : bestTime,
+  };
+};
+
+// Dynamic Programming (Held-Karp) algorithm
+export const dynamicProgramming = (
+  graph: RouteGraph,
+  start: string,
+  end: string
+): { path: string[]; distance: number; time: number } => {
+  const { nodes, edges } = graph;
+  const nodeIds = Object.keys(nodes);
+  
+  // Create distance matrix
+  const dist: Record<string, Record<string, number>> = {};
+  const time: Record<string, Record<string, number>> = {};
+  
+  nodeIds.forEach(i => {
+    dist[i] = {};
+    time[i] = {};
+    nodeIds.forEach(j => {
+      dist[i][j] = i === j ? 0 : Number.MAX_SAFE_INTEGER;
+      time[i][j] = i === j ? 0 : Number.MAX_SAFE_INTEGER;
+    });
+  });
+
+  // Fill in direct edges
+  edges.forEach(edge => {
+    dist[edge.from][edge.to] = edge.distance;
+    time[edge.from][edge.to] = edge.time;
+  });
+
+  // Floyd-Warshall for all-pairs shortest paths
+  nodeIds.forEach(k => {
+    nodeIds.forEach(i => {
+      nodeIds.forEach(j => {
+        if (dist[i][k] !== Number.MAX_SAFE_INTEGER && 
+            dist[k][j] !== Number.MAX_SAFE_INTEGER &&
+            dist[i][k] + dist[k][j] < dist[i][j]) {
+          dist[i][j] = dist[i][k] + dist[k][j];
+          time[i][j] = time[i][k] + time[k][j];
+        }
+      });
+    });
+  });
+
+  // Reconstruct path using memoization
+  const memo: Record<string, string[]> = {};
+  
+  const getPath = (from: string, to: string): string[] => {
+    const key = `${from}-${to}`;
+    if (memo[key]) return memo[key];
+    
+    if (from === to) return [from];
+    if (dist[from][to] === Number.MAX_SAFE_INTEGER) return [];
+    
+    // Find intermediate node
+    for (const k of nodeIds) {
+      if (dist[from][k] + dist[k][to] === dist[from][to]) {
+        const pathToK = getPath(from, k);
+        const pathFromK = getPath(k, to);
+        if (pathToK.length > 0 && pathFromK.length > 0) {
+          const result = [...pathToK, ...pathFromK.slice(1)];
+          memo[key] = result;
+          return result;
+        }
+      }
+    }
+    
+    return [from, to];
+  };
+
+  const path = getPath(start, end);
+
+  return {
+    path,
+    distance: dist[start][end] === Number.MAX_SAFE_INTEGER ? 0 : dist[start][end],
+    time: time[start][end] === Number.MAX_SAFE_INTEGER ? 0 : time[start][end],
+  };
+};
+
+// Nearest Neighbor (Greedy) algorithm
+export const nearestNeighbor = (
+  graph: RouteGraph,
+  start: string,
+  end: string
+): { path: string[]; distance: number; time: number } => {
+  const { nodes, edges } = graph;
+  const visited = new Set<string>();
+  const path = [start];
+  let current = start;
+  let totalDistance = 0;
+  let totalTime = 0;
+
+  visited.add(start);
+
+  while (current !== end && visited.size < Object.keys(nodes).length) {
+    let nearestNode = "";
+    let nearestDistance = Number.MAX_SAFE_INTEGER;
+    let nearestTime = 0;
+
+    // Find nearest unvisited neighbor
+    edges
+      .filter(edge => edge.from === current && !visited.has(edge.to))
+      .forEach(edge => {
+        if (edge.distance < nearestDistance) {
+          nearestDistance = edge.distance;
+          nearestTime = edge.time;
+          nearestNode = edge.to;
+        }
+      });
+
+    if (nearestNode === "") break;
+
+    path.push(nearestNode);
+    visited.add(nearestNode);
+    current = nearestNode;
+    totalDistance += nearestDistance;
+    totalTime += nearestTime;
+
+    // If we reached the end, break
+    if (current === end) break;
+  }
+
+  // If we didn't reach the end, try direct connection
+  if (current !== end) {
+    const directEdge = edges.find(edge => edge.from === current && edge.to === end);
+    if (directEdge) {
+      path.push(end);
+      totalDistance += directEdge.distance;
+      totalTime += directEdge.time;
+    }
+  }
+
+  return {
+    path: path[path.length - 1] === end ? path : [],
+    distance: path[path.length - 1] === end ? totalDistance : 0,
+    time: path[path.length - 1] === end ? totalTime : 0,
+  };
+};
+
+// Branch and Bound algorithm
+export const branchAndBound = (
+  graph: RouteGraph,
+  start: string,
+  end: string
+): { path: string[]; distance: number; time: number } => {
+  const { nodes, edges } = graph;
+  
+  interface Node {
+    path: string[];
+    cost: number;
+    time: number;
+    bound: number;
+  }
+
+  const calculateBound = (path: string[], target: string): number => {
+    const current = path[path.length - 1];
+    const visited = new Set(path);
+    
+    // Find minimum edge cost to unvisited nodes
+    let minCost = Number.MAX_SAFE_INTEGER;
+    edges
+      .filter(edge => edge.from === current && !visited.has(edge.to))
+      .forEach(edge => {
+        minCost = Math.min(minCost, edge.distance);
+      });
+    
+    return minCost === Number.MAX_SAFE_INTEGER ? 0 : minCost;
+  };
+
+  const queue: Node[] = [{
+    path: [start],
+    cost: 0,
+    time: 0,
+    bound: calculateBound([start], end)
+  }];
+
+  let bestSolution: Node | null = null;
+  let bestCost = Number.MAX_SAFE_INTEGER;
+
+  while (queue.length > 0) {
+    // Sort by bound (best-first search)
+    queue.sort((a, b) => (a.cost + a.bound) - (b.cost + b.bound));
+    const current = queue.shift()!;
+
+    // Prune if bound exceeds best known solution
+    if (current.cost + current.bound >= bestCost) continue;
+
+    const currentNode = current.path[current.path.length - 1];
+
+    if (currentNode === end) {
+      if (current.cost < bestCost) {
+        bestCost = current.cost;
+        bestSolution = current;
+      }
+      continue;
+    }
+
+    // Expand current node
+    edges
+      .filter(edge => edge.from === currentNode && !current.path.includes(edge.to))
+      .forEach(edge => {
+        const newPath = [...current.path, edge.to];
+        const newCost = current.cost + edge.distance;
+        const newTime = current.time + edge.time;
+        const newBound = calculateBound(newPath, end);
+
+        if (newCost + newBound < bestCost) {
+          queue.push({
+            path: newPath,
+            cost: newCost,
+            time: newTime,
+            bound: newBound
+          });
+        }
+      });
+  }
+
+  return bestSolution ? {
+    path: bestSolution.path,
+    distance: bestSolution.cost,
+    time: bestSolution.time,
+  } : { path: [], distance: 0, time: 0 };
+};
+
+// Helper functions
+const calculatePathCost = (path: string[], graph: RouteGraph): number => {
+  if (path.length < 2) return 0;
+  
+  let totalCost = 0;
+  for (let i = 0; i < path.length - 1; i++) {
+    const edge = graph.edges.find(e => e.from === path[i] && e.to === path[i + 1]);
+    if (edge) totalCost += edge.distance;
+  }
+  return totalCost;
+};
+
+const calculatePathTime = (path: string[], graph: RouteGraph): number => {
+  if (path.length < 2) return 0;
+  
+  let totalTime = 0;
+  for (let i = 0; i < path.length - 1; i++) {
+    const edge = graph.edges.find(e => e.from === path[i] && e.to === path[i + 1]);
+    if (edge) totalTime += edge.time;
+  }
+  return totalTime;
+};
+
 // Dijkstra's algorithm implementation
 export const dijkstra = (
   graph: RouteGraph,
@@ -402,9 +701,9 @@ const calculateWeatherImpact = (weather: Weather, mapType: string): number => {
   
   // Map type modifier (multiplier)
   const mapModifier: Record<string, number> = {
-    city: 0.9, // Better infrastructure to handle weather
-    rural: 1.2, // Less infrastructure
-    mountain: 1.5, // Most affected by weather
+    bengaluru: 0.9, // Better infrastructure to handle weather
+    karnataka: 1.2, // Mixed infrastructure
+    mysuru: 1.0, // Moderate infrastructure
   };
   
   const impact = baseImpact[weather] * mapModifier[mapType];
@@ -476,20 +775,20 @@ export const runSimulation = (params: SimulationParams): SimulationResult => {
   // Run the selected algorithm
   let result;
   switch (algorithm) {
-    case 'dijkstra':
-      result = dijkstra(graph, startLocation, endLocation);
+    case 'brute-force':
+      result = bruteForce(graph, startLocation, endLocation);
       break;
-    case 'astar':
-      result = astar(graph, startLocation, endLocation);
+    case 'dynamic-programming':
+      result = dynamicProgramming(graph, startLocation, endLocation);
       break;
-    case 'bellman-ford':
-      result = bellmanFord(graph, startLocation, endLocation);
+    case 'nearest-neighbor':
+      result = nearestNeighbor(graph, startLocation, endLocation);
       break;
-    case 'floyd-warshall':
-      result = floydWarshall(graph, startLocation, endLocation);
+    case 'branch-and-bound':
+      result = branchAndBound(graph, startLocation, endLocation);
       break;
     default:
-      result = dijkstra(graph, startLocation, endLocation);
+      result = nearestNeighbor(graph, startLocation, endLocation);
   }
   
   const { path, distance, time } = result;
@@ -519,7 +818,7 @@ export const runSimulation = (params: SimulationParams): SimulationResult => {
   };
 };
 
-// Import getRouteGraph from maps.ts to fix the missing reference
+// Import getRouteGraph from maps.ts
 import { getRouteGraph } from '../data/maps';
 
 // Function to get algorithm description
@@ -532,72 +831,72 @@ export const getAlgorithmDescription = (algorithm: Algorithm): {
   cons: string[];
 } => {
   switch (algorithm) {
-    case 'dijkstra':
+    case 'brute-force':
       return {
-        name: "Dijkstra's Algorithm",
-        description: "Dijkstra's algorithm finds the shortest path between nodes in a graph. It uses a greedy approach, always selecting the unvisited node with the lowest distance value. It works well for graphs with positive edge weights.",
-        timeComplexity: "O(|E| + |V|log|V|) with priority queue",
-        spaceComplexity: "O(|V|)",
+        name: "Brute Force",
+        description: "Brute force examines all possible paths between the start and end nodes to find the optimal solution. It guarantees finding the best path but at the cost of computational efficiency.",
+        timeComplexity: "O(n!) where n is the number of nodes",
+        spaceComplexity: "O(n)",
         pros: [
-          "Guarantees the shortest path",
-          "Works well in dense graphs",
-          "Efficient for single-source problems"
+          "Guarantees the optimal solution",
+          "Simple to understand and implement",
+          "Works for any graph structure"
         ],
         cons: [
-          "Doesn't work with negative edges",
-          "Can be slower than A* for targeted searches",
-          "Examines more nodes than necessary when target is known"
+          "Extremely slow for large graphs",
+          "Exponential time complexity",
+          "Not practical for real-world applications"
         ]
       };
-    case 'astar':
+    case 'dynamic-programming':
       return {
-        name: "A* Algorithm",
-        description: "A* is an informed search algorithm that uses a heuristic function to guide its search. It evaluates nodes by combining the cost to reach the node and the estimated cost to the goal. A* is optimal if the heuristic is admissible.",
-        timeComplexity: "O(|E|) but depends on heuristic quality",
-        spaceComplexity: "O(|V|)",
+        name: "Dynamic Programming (Held-Karp)",
+        description: "Dynamic programming solves the shortest path problem by breaking it down into subproblems and storing results to avoid redundant calculations. The Held-Karp algorithm is optimal for the traveling salesman problem.",
+        timeComplexity: "O(n²·2ⁿ) for TSP, O(n³) for shortest path",
+        spaceComplexity: "O(n·2ⁿ) for TSP, O(n²) for shortest path",
         pros: [
-          "Typically faster than Dijkstra when a good heuristic exists",
-          "Guarantees shortest path if heuristic is admissible",
-          "Examines fewer nodes by using goal-directed search"
+          "Optimal solution guaranteed",
+          "Avoids redundant calculations through memoization",
+          "More efficient than brute force"
         ],
         cons: [
-          "Requires a good heuristic function",
-          "Performance depends heavily on heuristic quality",
-          "May use more memory than simpler algorithms"
+          "Still exponential for TSP variants",
+          "High memory usage",
+          "Complex implementation"
         ]
       };
-    case 'bellman-ford':
+    case 'nearest-neighbor':
       return {
-        name: "Bellman-Ford Algorithm",
-        description: "The Bellman-Ford algorithm computes shortest paths from a single source vertex to all other vertices in a weighted graph. Unlike Dijkstra's, it can handle graphs with negative weight edges.",
-        timeComplexity: "O(|V|·|E|)",
-        spaceComplexity: "O(|V|)",
+        name: "Nearest Neighbor (Greedy)",
+        description: "The nearest neighbor algorithm is a greedy approach that always selects the closest unvisited node. While fast and simple, it doesn't guarantee the optimal solution.",
+        timeComplexity: "O(n²)",
+        spaceComplexity: "O(n)",
         pros: [
-          "Works with negative edge weights",
-          "Can detect negative cycles",
-          "Simple implementation"
+          "Very fast execution",
+          "Simple to implement",
+          "Good for real-time applications"
         ],
         cons: [
-          "Slower than Dijkstra's for most practical cases",
-          "Inefficient for sparse graphs",
-          "Not practical for large-scale real-time routing"
+          "Does not guarantee optimal solution",
+          "Can get stuck in local optima",
+          "Quality depends on starting point"
         ]
       };
-    case 'floyd-warshall':
+    case 'branch-and-bound':
       return {
-        name: "Floyd-Warshall Algorithm",
-        description: "Floyd-Warshall is a dynamic programming approach that finds the shortest paths between all pairs of vertices in a weighted graph. It works with positive or negative edge weights, but no negative cycles.",
-        timeComplexity: "O(|V|³)",
-        spaceComplexity: "O(|V|²)",
+        name: "Branch and Bound",
+        description: "Branch and bound systematically explores the solution space while pruning branches that cannot lead to better solutions. It combines the completeness of brute force with intelligent pruning.",
+        timeComplexity: "O(n!) worst case, much better in practice",
+        spaceComplexity: "O(n)",
         pros: [
-          "Finds all shortest paths between all pairs of vertices",
-          "Works with negative edges (but no negative cycles)",
-          "Simple implementation with dynamic programming"
+          "Guarantees optimal solution",
+          "More efficient than brute force through pruning",
+          "Can provide bounds on solution quality"
         ],
         cons: [
-          "High time and space complexity makes it impractical for large graphs",
-          "Not suitable for real-time routing in large networks",
-          "Overkill when only specific paths are needed"
+          "Still exponential in worst case",
+          "Performance depends on bounding function quality",
+          "Complex to implement effectively"
         ]
       };
     default:
