@@ -363,7 +363,7 @@ const GraphBuilder: React.FC<GraphBuilderProps> = ({
 
   const flowStyles = isEmbedded 
     ? { height: '100%', width: '100%' } 
-    : { height: 'calc(100vh - 200px)', width: '100%' };
+    : { height: '500px', width: '100%' };
 
   const nodeOptions = nodes.map(node => ({
     id: node.id,
@@ -371,33 +371,37 @@ const GraphBuilder: React.FC<GraphBuilderProps> = ({
   }));
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full space-y-6">
       {showControls && (
-        <div className="space-y-4 mb-4">
-          {/* Node Creation */}
-          <div className="flex items-center gap-2 p-2 bg-background rounded-md border">
-            <Input
-              type="text"
-              value={nodeName}
-              onChange={(e) => setNodeName(e.target.value)}
-              placeholder="Node name"
-              className="px-3 py-2 border rounded-md flex-1"
-              onKeyDown={(e) => e.key === 'Enter' && handleAddNode()}
-            />
-            <Button onClick={handleAddNode} size="sm">
-              <Plus className="h-4 w-4 mr-1" /> Add Node
-            </Button>
-          </div>
-          
-          {/* Edge Creation */}
-          <div className="p-2 bg-background rounded-md border">
-            <div className="text-sm font-medium mb-2">Add Edge with Weight</div>
-            <div className="grid grid-cols-2 gap-2 mb-2">
-              <div>
-                <Label htmlFor="source-node" className="text-xs">Source Node</Label>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left Column - Node and Edge Creation */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Graph Construction</h3>
+            
+            {/* Node Creation */}
+            <div className="p-4 bg-background rounded-md border">
+              <Label className="text-sm font-medium mb-2 block">Add Node</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={nodeName}
+                  onChange={(e) => setNodeName(e.target.value)}
+                  placeholder="Node name"
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddNode()}
+                />
+                <Button onClick={handleAddNode} size="sm">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            {/* Edge Creation */}
+            <div className="p-4 bg-background rounded-md border">
+              <Label className="text-sm font-medium mb-2 block">Add Edge</Label>
+              <div className="space-y-2">
                 <Select value={selectedSource || ''} onValueChange={setSelectedSource}>
                   <SelectTrigger className="h-8">
-                    <SelectValue placeholder="Select source" />
+                    <SelectValue placeholder="Source node" />
                   </SelectTrigger>
                   <SelectContent>
                     {nodeOptions.map(node => (
@@ -405,13 +409,10 @@ const GraphBuilder: React.FC<GraphBuilderProps> = ({
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="target-node" className="text-xs">Target Node</Label>
+                
                 <Select value={selectedTarget || ''} onValueChange={setSelectedTarget}>
                   <SelectTrigger className="h-8">
-                    <SelectValue placeholder="Select target" />
+                    <SelectValue placeholder="Target node" />
                   </SelectTrigger>
                   <SelectContent>
                     {nodeOptions.map(node => (
@@ -419,37 +420,44 @@ const GraphBuilder: React.FC<GraphBuilderProps> = ({
                     ))}
                   </SelectContent>
                 </Select>
+                
+                <div className="flex gap-2">
+                  <div className="flex items-center flex-1">
+                    <Hash className="h-4 w-4 mr-1 text-muted-foreground" />
+                    <Input
+                      type="number"
+                      min="1"
+                      value={edgeWeight}
+                      onChange={(e) => setEdgeWeight(e.target.value)}
+                      placeholder="Weight"
+                    />
+                  </div>
+                  <Button onClick={handleAddEdge} size="sm">Add Edge</Button>
+                </div>
               </div>
             </div>
             
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <Label htmlFor="edge-weight" className="text-xs mb-1">Weight</Label>
-                <div className="flex items-center">
-                  <Hash className="h-4 w-4 mr-1 text-muted-foreground" />
-                  <Input
-                    id="edge-weight"
-                    type="number"
-                    min="1"
-                    value={edgeWeight}
-                    onChange={(e) => setEdgeWeight(e.target.value)}
-                    className="flex-1"
-                  />
-                </div>
-              </div>
-              <Button onClick={handleAddEdge} className="mb-0">Add Edge</Button>
+            {/* Graph Management */}
+            <div className="grid grid-cols-2 gap-2">
+              <Button onClick={handleDeleteSelected} variant="destructive" size="sm">
+                <Trash className="h-4 w-4 mr-1" /> Delete
+              </Button>
+              <Button onClick={handleResetGraph} variant="destructive" size="sm">
+                Reset
+              </Button>
             </div>
           </div>
 
-          {/* Algorithm Selection and Path Finding */}
-          <div className="p-2 bg-background rounded-md border">
-            <div className="text-sm font-medium mb-2">Path Finding</div>
-            <div className="grid grid-cols-2 gap-2 mb-2">
+          {/* Middle Column - Algorithm Configuration */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Algorithm Setup</h3>
+            
+            <div className="p-4 bg-background rounded-md border space-y-4">
               <div>
-                <Label className="text-xs">Start Node</Label>
+                <Label className="text-sm font-medium mb-2 block">Start Node</Label>
                 <Select value={startNode} onValueChange={setStartNode}>
-                  <SelectTrigger className="h-8">
-                    <SelectValue placeholder="Select start" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select start node" />
                   </SelectTrigger>
                   <SelectContent>
                     {nodeOptions.map(node => (
@@ -460,10 +468,10 @@ const GraphBuilder: React.FC<GraphBuilderProps> = ({
               </div>
               
               <div>
-                <Label className="text-xs">End Node</Label>
+                <Label className="text-sm font-medium mb-2 block">End Node</Label>
                 <Select value={endNode} onValueChange={setEndNode}>
-                  <SelectTrigger className="h-8">
-                    <SelectValue placeholder="Select end" />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select end node" />
                   </SelectTrigger>
                   <SelectContent>
                     {nodeOptions.map(node => (
@@ -472,13 +480,11 @@ const GraphBuilder: React.FC<GraphBuilderProps> = ({
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-2 mb-2">
               <div>
-                <Label className="text-xs">Algorithm</Label>
+                <Label className="text-sm font-medium mb-2 block">Primary Algorithm</Label>
                 <Select value={algorithm} onValueChange={(value: Algorithm) => setAlgorithm(value)}>
-                  <SelectTrigger className="h-8">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -491,75 +497,101 @@ const GraphBuilder: React.FC<GraphBuilderProps> = ({
               </div>
 
               <div>
-                <Label className="text-xs">Compare With</Label>
+                <Label className="text-sm font-medium mb-2 block">Compare With</Label>
                 <Select value={compareAlgorithm || 'none'} onValueChange={(value) => setCompareAlgorithm(value === 'none' ? null : value as Algorithm)}>
-                  <SelectTrigger className="h-8">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    <SelectItem value="dijkstra">Dijkstra</SelectItem>
-                    <SelectItem value="astar">A*</SelectItem>
-                    <SelectItem value="bellman-ford">Bellman-Ford</SelectItem>
-                    <SelectItem value="floyd-warshall">Floyd-Warshall</SelectItem>
+                    {["dijkstra", "astar", "bellman-ford", "floyd-warshall"]
+                      .filter(algo => algo !== algorithm)
+                      .map(algo => (
+                        <SelectItem key={algo} value={algo}>
+                          {algo === "dijkstra" ? "Dijkstra" : 
+                           algo === "astar" ? "A*" : 
+                           algo === "bellman-ford" ? "Bellman-Ford" : 
+                           "Floyd-Warshall"}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              <Button onClick={handleRunGraphSimulation} className="w-full">
+                <Play className="h-4 w-4 mr-2" /> Run Algorithm
+              </Button>
             </div>
-
-            <Button onClick={handleRunGraphSimulation} className="w-full">
-              <Play className="h-4 w-4 mr-1" /> Run Algorithm
-            </Button>
-          </div>
-          
-          {/* Graph Management */}
-          <div className="grid grid-cols-2 gap-2">
-            <Button onClick={handleDeleteSelected} variant="destructive" size="sm">
-              <Trash className="h-4 w-4 mr-1" /> Delete Selected
-            </Button>
-            
-            <Button onClick={handleResetGraph} variant="destructive" size="sm">
-              Reset Graph
-            </Button>
           </div>
 
-          {/* Save/Load/Export */}
-          <div className="grid grid-cols-3 gap-2">
-            <Button onClick={handleSaveGraph} variant="outline" size="sm">
-              <Save className="h-4 w-4 mr-1" /> Save
-            </Button>
+          {/* Right Column - Results */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Results</h3>
             
-            <Button onClick={handleLoadGraph} variant="outline" size="sm">
-              <FolderOpen className="h-4 w-4 mr-1" /> Load
-            </Button>
-            
-            <Button onClick={handleExportGraph} variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-1" /> Export
-            </Button>
-          </div>
+            {(result || compareResult) ? (
+              <div className="space-y-4">
+                {result && (
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-md">
+                    <h4 className="font-medium text-green-800 mb-2">
+                      {result.algorithm.toUpperCase()}
+                    </h4>
+                    <div className="text-sm space-y-1">
+                      <p><span className="font-medium">Distance:</span> {result.metrics.distance.toFixed(2)}m</p>
+                      <p><span className="font-medium">Time:</span> {result.metrics.time.toFixed(2)}s</p>
+                      <p><span className="font-medium">Cost:</span> {result.metrics.cost.toFixed(2)}</p>
+                      <p><span className="font-medium">Path:</span></p>
+                      <p className="text-xs bg-white p-2 rounded border">
+                        {result.path.length > 0 ? result.path.join(' → ') : 'No path found'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                
+                {compareResult && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+                    <h4 className="font-medium text-red-800 mb-2">
+                      {compareResult.algorithm.toUpperCase()} (Comparison)
+                    </h4>
+                    <div className="text-sm space-y-1">
+                      <p><span className="font-medium">Distance:</span> {compareResult.metrics.distance.toFixed(2)}m</p>
+                      <p><span className="font-medium">Time:</span> {compareResult.metrics.time.toFixed(2)}s</p>
+                      <p><span className="font-medium">Cost:</span> {compareResult.metrics.cost.toFixed(2)}</p>
+                      <p><span className="font-medium">Path:</span></p>
+                      <p className="text-xs bg-white p-2 rounded border">
+                        {compareResult.path.length > 0 ? compareResult.path.join(' → ') : 'No path found'}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
-          {/* Import */}
-          <div>
-            <input
-              type="file"
-              accept=".json"
-              onChange={handleImportGraph}
-              style={{ display: 'none' }}
-              id="import-graph"
-            />
-            <Button 
-              onClick={() => document.getElementById('import-graph')?.click()}
-              variant="outline" 
-              size="sm"
-              className="w-full"
-            >
-              <Upload className="h-4 w-4 mr-1" /> Import Graph
-            </Button>
+                {result && compareResult && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+                    <h4 className="font-medium text-blue-800 mb-2">Comparison Summary</h4>
+                    <div className="text-sm space-y-1">
+                      <p><span className="font-medium">Distance Difference:</span> {Math.abs(result.metrics.distance - compareResult.metrics.distance).toFixed(2)}m</p>
+                      <p><span className="font-medium">Time Difference:</span> {Math.abs(result.metrics.time - compareResult.metrics.time).toFixed(2)}s</p>
+                      <p><span className="font-medium">Better Algorithm:</span> {
+                        result.metrics.distance <= compareResult.metrics.distance ? 
+                        result.algorithm.toUpperCase() : 
+                        compareResult.algorithm.toUpperCase()
+                      }</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="p-4 bg-gray-50 border border-gray-200 rounded-md">
+                <p className="text-sm text-gray-600">
+                  Build your graph and run algorithms to see results here.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
       
-      <div className={`flex-1 border rounded-md overflow-hidden ${!showControls ? 'h-full' : ''}`}>
+      {/* Graph Visualization */}
+      <div className="flex-1 border rounded-md overflow-hidden">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -591,27 +623,37 @@ const GraphBuilder: React.FC<GraphBuilderProps> = ({
         </ReactFlow>
       </div>
 
-      {/* Results Display */}
-      {(result || compareResult) && !showControls && (
-        <div className="mt-4 p-4 bg-background rounded-md border">
-          <h3 className="text-lg font-medium mb-2">Algorithm Results</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {result && (
-              <div>
-                <h4 className="font-medium text-green-600">{result.algorithm.toUpperCase()}</h4>
-                <p>Distance: {result.metrics.distance}m</p>
-                <p>Time: {result.metrics.time}s</p>
-                <p>Path: {result.path.join(' → ')}</p>
-              </div>
-            )}
-            {compareResult && (
-              <div>
-                <h4 className="font-medium text-red-600">{compareResult.algorithm.toUpperCase()}</h4>
-                <p>Distance: {compareResult.metrics.distance}m</p>
-                <p>Time: {compareResult.metrics.time}s</p>
-                <p>Path: {compareResult.path.join(' → ')}</p>
-              </div>
-            )}
+      {/* Save/Load/Import/Export Controls */}
+      {showControls && (
+        <div className="grid grid-cols-4 gap-2">
+          <Button onClick={handleSaveGraph} variant="outline" size="sm">
+            <Save className="h-4 w-4 mr-1" /> Save
+          </Button>
+          
+          <Button onClick={handleLoadGraph} variant="outline" size="sm">
+            <FolderOpen className="h-4 w-4 mr-1" /> Load
+          </Button>
+          
+          <Button onClick={handleExportGraph} variant="outline" size="sm">
+            <Download className="h-4 w-4 mr-1" /> Export
+          </Button>
+
+          <div>
+            <input
+              type="file"
+              accept=".json"
+              onChange={handleImportGraph}
+              style={{ display: 'none' }}
+              id="import-graph"
+            />
+            <Button 
+              onClick={() => document.getElementById('import-graph')?.click()}
+              variant="outline" 
+              size="sm"
+              className="w-full"
+            >
+              <Upload className="h-4 w-4 mr-1" /> Import
+            </Button>
           </div>
         </div>
       )}
