@@ -21,15 +21,14 @@ const Sidebar = ({ params, setParams, onRunSimulation, tabbed = false }: Sidebar
   const handleChange = (key: keyof SimulationParams, value: string) => {
     setParams((prev) => ({ ...prev, [key]: value }));
 
-    // Reset start and end locations when map changes
+    // Reset start location when map changes
     if (key === 'mapType') {
       const newLocations = mapLocations[value as MapType];
-      if (newLocations.length >= 2) {
+      if (newLocations.length >= 1) {
         setParams((prev) => ({ 
           ...prev, 
           mapType: value as MapType,
-          startLocation: newLocations[0].id,
-          endLocation: newLocations[1].id
+          startLocation: newLocations[0].id
         }));
       }
     }
@@ -44,7 +43,7 @@ const Sidebar = ({ params, setParams, onRunSimulation, tabbed = false }: Sidebar
             <div className="space-y-2">
               <Label htmlFor="algorithm" className="text-sidebar-foreground flex items-center gap-2">
                 <Route size={16} />
-                Algorithm
+                TSP Algorithm
               </Label>
               <Select
                 value={params.algorithm}
@@ -54,10 +53,10 @@ const Sidebar = ({ params, setParams, onRunSimulation, tabbed = false }: Sidebar
                   <SelectValue placeholder="Select Algorithm" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="brute-force">Brute Force</SelectItem>
+                  <SelectItem value="brute-force">Brute Force TSP</SelectItem>
                   <SelectItem value="dynamic-programming">Dynamic Programming (Held-Karp)</SelectItem>
-                  <SelectItem value="nearest-neighbor">Nearest Neighbor (Greedy)</SelectItem>
-                  <SelectItem value="branch-and-bound">Branch and Bound</SelectItem>
+                  <SelectItem value="nearest-neighbor">Nearest Neighbor TSP</SelectItem>
+                  <SelectItem value="branch-and-bound">Branch and Bound TSP</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -128,35 +127,15 @@ const Sidebar = ({ params, setParams, onRunSimulation, tabbed = false }: Sidebar
               </Select>
             </div>
 
-            {/* Start Location */}
+            {/* Starting Location for TSP */}
             <div className="space-y-2">
-              <Label htmlFor="startLocation" className="text-sidebar-foreground">Start Location</Label>
+              <Label htmlFor="startLocation" className="text-sidebar-foreground">Starting City (TSP)</Label>
               <Select
                 value={params.startLocation}
                 onValueChange={(value) => handleChange('startLocation', value)}
               >
                 <SelectTrigger className="bg-sidebar-accent text-sidebar-foreground border-sidebar-border">
-                  <SelectValue placeholder="Select Start" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableLocations.map((location) => (
-                    <SelectItem key={location.id} value={location.id}>
-                      {location.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* End Location */}
-            <div className="space-y-2">
-              <Label htmlFor="endLocation" className="text-sidebar-foreground">End Location</Label>
-              <Select
-                value={params.endLocation}
-                onValueChange={(value) => handleChange('endLocation', value)}
-              >
-                <SelectTrigger className="bg-sidebar-accent text-sidebar-foreground border-sidebar-border">
-                  <SelectValue placeholder="Select End" />
+                  <SelectValue placeholder="Select Starting City" />
                 </SelectTrigger>
                 <SelectContent>
                   {availableLocations.map((location) => (
@@ -191,6 +170,13 @@ const Sidebar = ({ params, setParams, onRunSimulation, tabbed = false }: Sidebar
                 </SelectContent>
               </Select>
             </div>
+
+            {/* TSP Info */}
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-xs text-blue-800">
+                <strong>TSP (Traveling Salesman Problem):</strong> Find the shortest tour that visits all cities exactly once and returns to the starting city.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -199,7 +185,7 @@ const Sidebar = ({ params, setParams, onRunSimulation, tabbed = false }: Sidebar
         onClick={onRunSimulation}
         className="w-full bg-sidebar-primary hover:bg-sidebar-primary/90 text-sidebar-primary-foreground flex items-center justify-center gap-2 py-6 mt-4"
       >
-        Run Simulation
+        Solve TSP
         <ChevronRight size={18} />
       </Button>
     </>
@@ -212,7 +198,7 @@ const Sidebar = ({ params, setParams, onRunSimulation, tabbed = false }: Sidebar
   return (
     <aside className="bg-sidebar p-4 rounded-lg w-80 flex flex-col gap-5 h-full max-h-screen overflow-y-auto">
       <div className="flex items-center justify-center mb-2">
-        <h2 className="text-sidebar-foreground text-2xl font-bold">Karnataka Route Explorer</h2>
+        <h2 className="text-sidebar-foreground text-2xl font-bold">Karnataka TSP Solver</h2>
       </div>
       {content}
     </aside>

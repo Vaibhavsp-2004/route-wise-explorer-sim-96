@@ -18,14 +18,13 @@ import { Label } from '@/components/ui/label';
 import { exportToPDF } from '../utils/pdfExport';
 
 const Index = () => {
-  // Initialize simulation parameters with new defaults
+  // Initialize simulation parameters for TSP
   const [params, setParams] = useState<SimulationParams>({
     algorithm: 'nearest-neighbor',
     mapType: 'karnataka',
     weather: 'sunny',
     timeOfDay: 'afternoon',
     startLocation: mapLocations.karnataka[0].id,
-    endLocation: mapLocations.karnataka[1].id,
     vehicle: 'car',
   });
   
@@ -40,23 +39,17 @@ const Index = () => {
     document.documentElement.classList.add('dark');
   }, []);
   
-  // Handle running the simulation
+  // Handle running the TSP simulation
   const handleRunSimulation = () => {
     try {
-      // Ensure start and end locations are different
-      if (params.startLocation === params.endLocation) {
-        toast.error("Start and end locations must be different");
-        return;
-      }
-      
-      // Run the simulation
+      // Run the TSP simulation
       const simulationResult = runSimulation(params);
       
-      // Check if path was found
+      // Check if tour was found
       if (simulationResult.path.length === 0) {
-        toast.warning("No valid path found between selected locations");
+        toast.warning("No valid TSP tour found for the selected cities");
       } else {
-        toast.success("Route calculated successfully!");
+        toast.success("TSP tour calculated successfully!");
       }
       
       setResult(simulationResult);
@@ -71,8 +64,8 @@ const Index = () => {
       }
       
     } catch (error) {
-      console.error("Simulation error:", error);
-      toast.error("Error running simulation");
+      console.error("TSP simulation error:", error);
+      toast.error("Error running TSP simulation");
     }
   };
   
@@ -90,7 +83,7 @@ const Index = () => {
   useEffect(() => {
     setResult(null);
     setCompareResult(null);
-  }, [params.mapType, params.startLocation, params.endLocation]);
+  }, [params.mapType, params.startLocation]);
   
   // Reset comparison results when primary algorithm changes
   useEffect(() => {
@@ -129,7 +122,7 @@ const Index = () => {
       <main className="flex-1 p-4 overflow-y-auto">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h1 className="text-3xl font-bold text-foreground">Karnataka Route Optimization Simulator</h1>
+            <h1 className="text-3xl font-bold text-foreground">Karnataka TSP Solver</h1>
             
             <div className="flex flex-wrap items-center gap-2">
               <Link 
@@ -155,7 +148,7 @@ const Index = () => {
           {/* View Mode Tabs */}
           <Tabs defaultValue="simulation" value={viewMode} onValueChange={(value) => setViewMode(value as 'simulation' | 'graph')} className="w-full">
             <TabsList className="grid grid-cols-2">
-              <TabsTrigger value="simulation">Simulation View</TabsTrigger>
+              <TabsTrigger value="simulation">TSP Simulation</TabsTrigger>
               <TabsTrigger value="graph">Graph Builder</TabsTrigger>
             </TabsList>
           </Tabs>
@@ -167,7 +160,7 @@ const Index = () => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
                     <ArrowRightLeft className="h-5 w-5" />
-                    <h2 className="text-lg font-medium">Algorithm Comparison</h2>
+                    <h2 className="text-lg font-medium">TSP Algorithm Comparison</h2>
                   </div>
                   
                   <RadioGroup 
@@ -219,7 +212,7 @@ const Index = () => {
                     result={result} 
                     compareResult={compareResult}
                     startLocation={params.startLocation}
-                    endLocation={params.endLocation}
+                    endLocation={params.startLocation} // TSP returns to start
                     showCompare={!!compareAlgorithm && !!compareResult}
                   />
                 </div>

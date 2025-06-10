@@ -15,52 +15,53 @@ const minDistance = (dist: Record<string, number>, visited: Record<string, boole
   return minIndex;
 };
 
-// Brute Force algorithm - exhaustive search
+// TSP Brute Force algorithm - tries all permutations
 export const bruteForce = (
   graph: RouteGraph,
-  start: string,
-  end: string
+  start: string
 ): { path: string[]; distance: number; time: number } => {
   const { nodes } = graph;
   const nodeIds = Object.keys(nodes);
   
-  if (!nodeIds.includes(start) || !nodeIds.includes(end)) {
+  if (!nodeIds.includes(start)) {
     return { path: [], distance: 0, time: 0 };
   }
 
+  // Get all nodes except start
+  const otherNodes = nodeIds.filter(node => node !== start);
+  
   let bestPath: string[] = [];
   let bestDistance = Number.MAX_SAFE_INTEGER;
   let bestTime = Number.MAX_SAFE_INTEGER;
 
-  // Generate all possible paths (simplified for performance)
-  const findAllPaths = (current: string, target: string, visited: Set<string>, path: string[]): void => {
-    if (current === target) {
-      const pathCost = calculatePathCost(path, graph);
-      const pathTime = calculatePathTime(path, graph);
-      
-      if (pathCost < bestDistance) {
-        bestDistance = pathCost;
-        bestTime = pathTime;
-        bestPath = [...path];
+  // Generate all permutations of other nodes
+  const permute = (arr: string[]): string[][] => {
+    if (arr.length <= 1) return [arr];
+    const result: string[][] = [];
+    for (let i = 0; i < arr.length; i++) {
+      const rest = arr.slice(0, i).concat(arr.slice(i + 1));
+      const perms = permute(rest);
+      for (const perm of perms) {
+        result.push([arr[i]].concat(perm));
       }
-      return;
     }
-
-    if (path.length > 5) return; // Limit depth for performance
-
-    graph.edges
-      .filter(edge => edge.from === current && !visited.has(edge.to))
-      .forEach(edge => {
-        visited.add(edge.to);
-        path.push(edge.to);
-        findAllPaths(edge.to, target, visited, path);
-        path.pop();
-        visited.delete(edge.to);
-      });
+    return result;
   };
-
-  const visited = new Set<string>([start]);
-  findAllPaths(start, end, visited, [start]);
+  
+  const permutations = permute(otherNodes);
+  
+  // Try each permutation as TSP tour
+  for (const perm of permutations) {
+    const fullPath = [start, ...perm, start]; // Complete tour
+    const pathCost = calculatePathCost(fullPath, graph);
+    const pathTime = calculatePathTime(fullPath, graph);
+    
+    if (pathCost < bestDistance && pathCost > 0) {
+      bestDistance = pathCost;
+      bestTime = pathTime;
+      bestPath = fullPath;
+    }
+  }
 
   return {
     path: bestPath,
@@ -69,99 +70,134 @@ export const bruteForce = (
   };
 };
 
-// Dynamic Programming (Held-Karp) algorithm
+// TSP Dynamic Programming (Held-Karp) algorithm
 export const dynamicProgramming = (
   graph: RouteGraph,
-  start: string,
-  end: string
+  start: string
 ): { path: string[]; distance: number; time: number } => {
-  const { nodes, edges } = graph;
+  const { nodes } = graph;
   const nodeIds = Object.keys(nodes);
+  const n = nodeIds.length;
+  
+  if (n <= 1) return { path: [start], distance: 0, time: 0 };
+  
+  // Create index mapping
+  const nodeToIndex: Record<string, number> = {};
+  const indexToNode: Record<number, string> = {};
+  nodeIds.forEach((nodeId, index) => {
+    nodeToIndex[nodeId] = index;
+    indexToNode[index] = nodeId;
+  });
+  
+  const startIndex = nodeToIndex[start];
   
   // Create distance matrix
-  const dist: Record<string, Record<string, number>> = {};
-  const time: Record<string, Record<string, number>> = {};
+  const dist: number[][] = Array(n).fill(null).map(() => Array(n).fill(Number.MAX_SAFE_INTEGER));
+  const time: number[][] = Array(n).fill(null).map(() => Array(n).fill(Number.MAX_SAFE_INTEGER));
   
-  nodeIds.forEach(i => {
-    dist[i] = {};
-    time[i] = {};
-    nodeIds.forEach(j => {
-      dist[i][j] = i === j ? 0 : Number.MAX_SAFE_INTEGER;
-      time[i][j] = i === j ? 0 : Number.MAX_SAFE_INTEGER;
-    });
+  // Fill distance matrix from graph edges
+  graph.edges.forEach(edge => {
+    const fromIndex = nodeToIndex[edge.from];
+    const toIndex = nodeToIndex[edge.to];
+    if (fromIndex !== undefined && toIndex !== undefined) {
+      dist[fromIndex][toIndex] = edge.distance;
+      time[fromIndex][toIndex] = edge.time;
+    }
   });
-
-  // Fill in direct edges
-  edges.forEach(edge => {
-    dist[edge.from][edge.to] = edge.distance;
-    time[edge.from][edge.to] = edge.time;
-  });
-
-  // Floyd-Warshall for all-pairs shortest paths
-  nodeIds.forEach(k => {
-    nodeIds.forEach(i => {
-      nodeIds.forEach(j => {
-        if (dist[i][k] !== Number.MAX_SAFE_INTEGER && 
-            dist[k][j] !== Number.MAX_SAFE_INTEGER &&
-            dist[i][k] + dist[k][j] < dist[i][j]) {
-          dist[i][j] = dist[i][k] + dist[k][j];
-          time[i][j] = time[i][k] + time[k][j];
-        }
-      });
-    });
-  });
-
-  // Reconstruct path using memoization
-  const memo: Record<string, string[]> = {};
   
-  const getPath = (from: string, to: string): string[] => {
-    const key = `${from}-${to}`;
-    if (memo[key]) return memo[key];
+  // DP table: dp[mask][i] = minimum cost to visit all cities in mask ending at city i
+  const dp: Record<string, Record<number, number>> = {};
+  const parent: Record<string, Record<number, number>> = {};
+  
+  // Initialize: starting from start city
+  const startMask = 1 << startIndex;
+  dp[startMask] = {};
+  dp[startMask][startIndex] = 0;
+  
+  // Fill DP table
+  for (let mask = 1; mask < (1 << n); mask++) {
+    if (!dp[mask]) dp[mask] = {};
+    if (!parent[mask]) parent[mask] = {};
     
-    if (from === to) return [from];
-    if (dist[from][to] === Number.MAX_SAFE_INTEGER) return [];
-    
-    // Find intermediate node
-    for (const k of nodeIds) {
-      if (dist[from][k] + dist[k][to] === dist[from][to]) {
-        const pathToK = getPath(from, k);
-        const pathFromK = getPath(k, to);
-        if (pathToK.length > 0 && pathFromK.length > 0) {
-          const result = [...pathToK, ...pathFromK.slice(1)];
-          memo[key] = result;
-          return result;
+    for (let u = 0; u < n; u++) {
+      if (!(mask & (1 << u)) || dp[mask][u] === undefined) continue;
+      
+      for (let v = 0; v < n; v++) {
+        if (mask & (1 << v) || dist[u][v] === Number.MAX_SAFE_INTEGER) continue;
+        
+        const newMask = mask | (1 << v);
+        if (!dp[newMask]) dp[newMask] = {};
+        if (!parent[newMask]) parent[newMask] = {};
+        
+        const newCost = dp[mask][u] + dist[u][v];
+        if (dp[newMask][v] === undefined || newCost < dp[newMask][v]) {
+          dp[newMask][v] = newCost;
+          parent[newMask][v] = u;
         }
       }
     }
+  }
+  
+  // Find minimum cost to return to start
+  const fullMask = (1 << n) - 1;
+  let minCost = Number.MAX_SAFE_INTEGER;
+  let lastCity = -1;
+  
+  for (let i = 0; i < n; i++) {
+    if (i === startIndex || !dp[fullMask] || dp[fullMask][i] === undefined) continue;
+    const totalCost = dp[fullMask][i] + dist[i][startIndex];
+    if (totalCost < minCost) {
+      minCost = totalCost;
+      lastCity = i;
+    }
+  }
+  
+  if (lastCity === -1) {
+    return { path: [], distance: 0, time: 0 };
+  }
+  
+  // Reconstruct path
+  const path: string[] = [];
+  let currentMask = fullMask;
+  let currentCity = lastCity;
+  
+  while (currentMask > 0) {
+    path.unshift(indexToNode[currentCity]);
+    if (currentMask === startMask) break;
     
-    return [from, to];
-  };
-
-  const path = getPath(start, end);
-
+    const prevCity = parent[currentMask][currentCity];
+    currentMask ^= (1 << currentCity);
+    currentCity = prevCity;
+  }
+  
+  path.push(indexToNode[startIndex]); // Return to start
+  
+  const totalTime = calculatePathTime(path, graph);
+  
   return {
     path,
-    distance: dist[start][end] === Number.MAX_SAFE_INTEGER ? 0 : dist[start][end],
-    time: time[start][end] === Number.MAX_SAFE_INTEGER ? 0 : time[start][end],
+    distance: minCost === Number.MAX_SAFE_INTEGER ? 0 : minCost,
+    time: totalTime,
   };
 };
 
-// Nearest Neighbor (Greedy) algorithm
+// TSP Nearest Neighbor algorithm
 export const nearestNeighbor = (
   graph: RouteGraph,
-  start: string,
-  end: string
+  start: string
 ): { path: string[]; distance: number; time: number } => {
   const { nodes, edges } = graph;
-  const visited = new Set<string>();
-  const path = [start];
+  const nodeIds = Object.keys(nodes);
+  const visited: Set<string> = new Set();
+  const path: string[] = [start];
   let current = start;
   let totalDistance = 0;
   let totalTime = 0;
 
   visited.add(start);
 
-  while (current !== end && visited.size < Object.keys(nodes).length) {
+  // Visit all other nodes
+  while (visited.size < nodeIds.length) {
     let nearestNode = "";
     let nearestDistance = Number.MAX_SAFE_INTEGER;
     let nearestTime = 0;
@@ -177,107 +213,134 @@ export const nearestNeighbor = (
         }
       });
 
-    if (nearestNode === "") break;
+    if (nearestNode === "") break; // No more reachable nodes
 
     path.push(nearestNode);
     visited.add(nearestNode);
     current = nearestNode;
     totalDistance += nearestDistance;
     totalTime += nearestTime;
-
-    // If we reached the end, break
-    if (current === end) break;
   }
 
-  // If we didn't reach the end, try direct connection
-  if (current !== end) {
-    const directEdge = edges.find(edge => edge.from === current && edge.to === end);
-    if (directEdge) {
-      path.push(end);
-      totalDistance += directEdge.distance;
-      totalTime += directEdge.time;
-    }
+  // Return to start to complete the tour
+  const returnEdge = edges.find(edge => edge.from === current && edge.to === start);
+  if (returnEdge && visited.size === nodeIds.length) {
+    path.push(start);
+    totalDistance += returnEdge.distance;
+    totalTime += returnEdge.time;
+  } else {
+    // If we can't complete the tour, return empty
+    return { path: [], distance: 0, time: 0 };
   }
 
   return {
-    path: path[path.length - 1] === end ? path : [],
-    distance: path[path.length - 1] === end ? totalDistance : 0,
-    time: path[path.length - 1] === end ? totalTime : 0,
+    path,
+    distance: totalDistance,
+    time: totalTime,
   };
 };
 
-// Branch and Bound algorithm
+// TSP Branch and Bound algorithm
 export const branchAndBound = (
   graph: RouteGraph,
-  start: string,
-  end: string
+  start: string
 ): { path: string[]; distance: number; time: number } => {
   const { nodes, edges } = graph;
+  const nodeIds = Object.keys(nodes);
   
   interface Node {
     path: string[];
     cost: number;
     time: number;
+    visited: Set<string>;
     bound: number;
   }
 
-  const calculateBound = (path: string[], target: string): number => {
-    const current = path[path.length - 1];
-    const visited = new Set(path);
+  const calculateTSPBound = (path: string[], visited: Set<string>): number => {
+    if (visited.size === nodeIds.length) {
+      // All nodes visited, need to return to start
+      const lastNode = path[path.length - 1];
+      const returnEdge = edges.find(edge => edge.from === lastNode && edge.to === start);
+      return returnEdge ? returnEdge.distance : Number.MAX_SAFE_INTEGER;
+    }
     
-    // Find minimum edge cost to unvisited nodes
-    let minCost = Number.MAX_SAFE_INTEGER;
-    edges
-      .filter(edge => edge.from === current && !visited.has(edge.to))
-      .forEach(edge => {
-        minCost = Math.min(minCost, edge.distance);
-      });
-    
-    return minCost === Number.MAX_SAFE_INTEGER ? 0 : minCost;
+    // Calculate minimum outgoing edge cost for remaining nodes
+    let minBound = 0;
+    for (const nodeId of nodeIds) {
+      if (!visited.has(nodeId)) {
+        let minEdge = Number.MAX_SAFE_INTEGER;
+        edges
+          .filter(edge => edge.from === nodeId && !visited.has(edge.to))
+          .forEach(edge => {
+            minEdge = Math.min(minEdge, edge.distance);
+          });
+        if (minEdge !== Number.MAX_SAFE_INTEGER) {
+          minBound += minEdge;
+        }
+      }
+    }
+    return minBound;
   };
 
   const queue: Node[] = [{
     path: [start],
     cost: 0,
     time: 0,
-    bound: calculateBound([start], end)
+    visited: new Set([start]),
+    bound: calculateTSPBound([start], new Set([start]))
   }];
 
   let bestSolution: Node | null = null;
   let bestCost = Number.MAX_SAFE_INTEGER;
 
   while (queue.length > 0) {
-    // Sort by bound (best-first search)
     queue.sort((a, b) => (a.cost + a.bound) - (b.cost + b.bound));
     const current = queue.shift()!;
 
-    // Prune if bound exceeds best known solution
     if (current.cost + current.bound >= bestCost) continue;
 
-    const currentNode = current.path[current.path.length - 1];
-
-    if (currentNode === end) {
-      if (current.cost < bestCost) {
-        bestCost = current.cost;
-        bestSolution = current;
+    if (current.visited.size === nodeIds.length) {
+      // All nodes visited, try to return to start
+      const lastNode = current.path[current.path.length - 1];
+      const returnEdge = edges.find(edge => edge.from === lastNode && edge.to === start);
+      
+      if (returnEdge) {
+        const totalCost = current.cost + returnEdge.distance;
+        const totalTime = current.time + returnEdge.time;
+        
+        if (totalCost < bestCost) {
+          bestCost = totalCost;
+          bestSolution = {
+            path: [...current.path, start],
+            cost: totalCost,
+            time: totalTime,
+            visited: current.visited,
+            bound: 0
+          };
+        }
       }
       continue;
     }
 
-    // Expand current node
+    const currentNode = current.path[current.path.length - 1];
+
+    // Expand to unvisited neighbors
     edges
-      .filter(edge => edge.from === currentNode && !current.path.includes(edge.to))
+      .filter(edge => edge.from === currentNode && !current.visited.has(edge.to))
       .forEach(edge => {
+        const newVisited = new Set(current.visited);
+        newVisited.add(edge.to);
         const newPath = [...current.path, edge.to];
         const newCost = current.cost + edge.distance;
         const newTime = current.time + edge.time;
-        const newBound = calculateBound(newPath, end);
+        const newBound = calculateTSPBound(newPath, newVisited);
 
         if (newCost + newBound < bestCost) {
           queue.push({
             path: newPath,
             cost: newCost,
             time: newTime,
+            visited: newVisited,
             bound: newBound
           });
         }
@@ -299,6 +362,7 @@ const calculatePathCost = (path: string[], graph: RouteGraph): number => {
   for (let i = 0; i < path.length - 1; i++) {
     const edge = graph.edges.find(e => e.from === path[i] && e.to === path[i + 1]);
     if (edge) totalCost += edge.distance;
+    else return Number.MAX_SAFE_INTEGER; // Invalid path
   }
   return totalCost;
 };
@@ -310,287 +374,9 @@ const calculatePathTime = (path: string[], graph: RouteGraph): number => {
   for (let i = 0; i < path.length - 1; i++) {
     const edge = graph.edges.find(e => e.from === path[i] && e.to === path[i + 1]);
     if (edge) totalTime += edge.time;
+    else return Number.MAX_SAFE_INTEGER; // Invalid path
   }
   return totalTime;
-};
-
-// Dijkstra's algorithm implementation
-export const dijkstra = (
-  graph: RouteGraph,
-  start: string,
-  end: string
-): { path: string[]; distance: number; time: number } => {
-  const { nodes, edges } = graph;
-  const dist: Record<string, number> = {};
-  const time: Record<string, number> = {};
-  const prev: Record<string, string> = {};
-  const visited: Record<string, boolean> = {};
-
-  // Initialize distances
-  Object.keys(nodes).forEach((nodeId) => {
-    dist[nodeId] = Number.MAX_SAFE_INTEGER;
-    time[nodeId] = Number.MAX_SAFE_INTEGER;
-    visited[nodeId] = false;
-  });
-
-  dist[start] = 0;
-  time[start] = 0;
-
-  Object.keys(nodes).forEach(() => {
-    const u = minDistance(dist, visited);
-    if (!u) return;
-    visited[u] = true;
-
-    edges
-      .filter((edge) => edge.from === u)
-      .forEach((edge) => {
-        const v = edge.to;
-        if (!visited[v] && dist[u] + edge.distance < dist[v]) {
-          dist[v] = dist[u] + edge.distance;
-          time[v] = time[u] + edge.time;
-          prev[v] = u;
-        }
-      });
-  });
-
-  // Reconstruct path
-  const path: string[] = [];
-  let current = end;
-  
-  if (prev[current] || current === start) {
-    while (current) {
-      path.unshift(current);
-      if (current === start) break;
-      current = prev[current];
-    }
-  }
-
-  return {
-    path,
-    distance: dist[end],
-    time: time[end],
-  };
-};
-
-// A* algorithm implementation
-export const astar = (
-  graph: RouteGraph,
-  start: string,
-  end: string
-): { path: string[]; distance: number; time: number } => {
-  const { nodes, edges } = graph;
-  
-  // Heuristic function (straight-line distance)
-  const heuristic = (nodeId: string): number => {
-    const node = nodes[nodeId];
-    const endNode = nodes[end];
-    
-    // Simple Euclidean distance as heuristic
-    const dx = node.lng - endNode.lng;
-    const dy = node.lat - endNode.lat;
-    return Math.sqrt(dx * dx + dy * dy) * 111000; // rough conversion to meters
-  };
-  
-  // Implementation details
-  const openSet: string[] = [start];
-  const cameFrom: Record<string, string> = {};
-  
-  const gScore: Record<string, number> = {};
-  const fScore: Record<string, number> = {};
-  
-  Object.keys(nodes).forEach((nodeId) => {
-    gScore[nodeId] = Number.MAX_SAFE_INTEGER;
-    fScore[nodeId] = Number.MAX_SAFE_INTEGER;
-  });
-  
-  gScore[start] = 0;
-  fScore[start] = heuristic(start);
-  
-  const times: Record<string, number> = {};
-  times[start] = 0;
-  
-  while (openSet.length > 0) {
-    // Find node with lowest fScore
-    let current = openSet[0];
-    let lowestFScore = fScore[current];
-    
-    openSet.forEach((nodeId) => {
-      if (fScore[nodeId] < lowestFScore) {
-        lowestFScore = fScore[nodeId];
-        current = nodeId;
-      }
-    });
-    
-    if (current === end) {
-      // Reconstruct path
-      const path: string[] = [];
-      let temp = current;
-      
-      while (temp) {
-        path.unshift(temp);
-        if (temp === start) break;
-        temp = cameFrom[temp];
-      }
-      
-      return {
-        path,
-        distance: gScore[end],
-        time: times[end],
-      };
-    }
-    
-    openSet.splice(openSet.indexOf(current), 1);
-    
-    edges
-      .filter((edge) => edge.from === current)
-      .forEach((edge) => {
-        const neighbor = edge.to;
-        const tentativeGScore = gScore[current] + edge.distance;
-        
-        if (tentativeGScore < gScore[neighbor]) {
-          cameFrom[neighbor] = current;
-          gScore[neighbor] = tentativeGScore;
-          times[neighbor] = times[current] + edge.time;
-          fScore[neighbor] = gScore[neighbor] + heuristic(neighbor);
-          
-          if (!openSet.includes(neighbor)) {
-            openSet.push(neighbor);
-          }
-        }
-      });
-  }
-  
-  // No path found
-  return {
-    path: [],
-    distance: 0,
-    time: 0,
-  };
-};
-
-// Bellman-Ford algorithm implementation
-export const bellmanFord = (
-  graph: RouteGraph,
-  start: string,
-  end: string
-): { path: string[]; distance: number; time: number } => {
-  const { nodes, edges } = graph;
-  const dist: Record<string, number> = {};
-  const time: Record<string, number> = {};
-  const prev: Record<string, string> = {};
-
-  // Initialize distances
-  Object.keys(nodes).forEach((nodeId) => {
-    dist[nodeId] = Number.MAX_SAFE_INTEGER;
-    time[nodeId] = Number.MAX_SAFE_INTEGER;
-  });
-
-  dist[start] = 0;
-  time[start] = 0;
-
-  // Relax all edges |V| - 1 times
-  for (let i = 0; i < Object.keys(nodes).length - 1; i++) {
-    edges.forEach((edge) => {
-      const u = edge.from;
-      const v = edge.to;
-      
-      if (dist[u] !== Number.MAX_SAFE_INTEGER && dist[u] + edge.distance < dist[v]) {
-        dist[v] = dist[u] + edge.distance;
-        time[v] = time[u] + edge.time;
-        prev[v] = u;
-      }
-    });
-  }
-
-  // Reconstruct path
-  const path: string[] = [];
-  let current = end;
-  
-  if (prev[current] || current === start) {
-    while (current) {
-      path.unshift(current);
-      if (current === start) break;
-      current = prev[current];
-    }
-  }
-
-  return {
-    path,
-    distance: dist[end],
-    time: time[end],
-  };
-};
-
-// Floyd-Warshall algorithm implementation
-export const floydWarshall = (
-  graph: RouteGraph,
-  start: string,
-  end: string
-): { path: string[]; distance: number; time: number } => {
-  const { nodes, edges } = graph;
-  const nodeIds = Object.keys(nodes);
-  
-  // Initialize distance and next matrices
-  const dist: Record<string, Record<string, number>> = {};
-  const next: Record<string, Record<string, string>> = {};
-  const times: Record<string, Record<string, number>> = {};
-  
-  // Initialize matrices
-  nodeIds.forEach((i) => {
-    dist[i] = {};
-    next[i] = {};
-    times[i] = {};
-    
-    nodeIds.forEach((j) => {
-      dist[i][j] = i === j ? 0 : Number.MAX_SAFE_INTEGER;
-      times[i][j] = i === j ? 0 : Number.MAX_SAFE_INTEGER;
-      next[i][j] = j; // Direct path initially
-    });
-  });
-  
-  // Fill in direct edge weights
-  edges.forEach((edge) => {
-    const u = edge.from;
-    const v = edge.to;
-    dist[u][v] = edge.distance;
-    times[u][v] = edge.time;
-  });
-  
-  // Floyd-Warshall algorithm
-  nodeIds.forEach((k) => {
-    nodeIds.forEach((i) => {
-      nodeIds.forEach((j) => {
-        if (dist[i][k] !== Number.MAX_SAFE_INTEGER && 
-            dist[k][j] !== Number.MAX_SAFE_INTEGER && 
-            dist[i][k] + dist[k][j] < dist[i][j]) {
-          dist[i][j] = dist[i][k] + dist[k][j];
-          times[i][j] = times[i][k] + times[k][j];
-          next[i][j] = next[i][k];
-        }
-      });
-    });
-  });
-  
-  // Reconstruct path
-  const path: string[] = [];
-  
-  if (dist[start][end] === Number.MAX_SAFE_INTEGER) {
-    return { path: [], distance: 0, time: 0 };
-  }
-  
-  let current = start;
-  path.push(current);
-  
-  while (current !== end) {
-    current = next[current][end];
-    path.push(current);
-  }
-  
-  return {
-    path,
-    distance: dist[start][end],
-    time: times[start][end],
-  };
 };
 
 // Calculate fuel or battery consumption based on vehicle and distance
@@ -765,30 +551,30 @@ const findPathEdges = (graph: RouteGraph, path: string[]): RouteEdge[] => {
   return pathEdges;
 };
 
-// Main function to run simulation based on the selected parameters
+// Main function to run TSP simulation
 export const runSimulation = (params: SimulationParams): SimulationResult => {
-  const { algorithm, mapType, weather, timeOfDay, startLocation, endLocation, vehicle } = params;
+  const { algorithm, mapType, weather, timeOfDay, startLocation, vehicle } = params;
   
   // Get the route graph for the selected map
   const graph = getRouteGraph(mapType);
   
-  // Run the selected algorithm
+  // Run the selected TSP algorithm
   let result;
   switch (algorithm) {
     case 'brute-force':
-      result = bruteForce(graph, startLocation, endLocation);
+      result = bruteForce(graph, startLocation);
       break;
     case 'dynamic-programming':
-      result = dynamicProgramming(graph, startLocation, endLocation);
+      result = dynamicProgramming(graph, startLocation);
       break;
     case 'nearest-neighbor':
-      result = nearestNeighbor(graph, startLocation, endLocation);
+      result = nearestNeighbor(graph, startLocation);
       break;
     case 'branch-and-bound':
-      result = branchAndBound(graph, startLocation, endLocation);
+      result = branchAndBound(graph, startLocation);
       break;
     default:
-      result = nearestNeighbor(graph, startLocation, endLocation);
+      result = nearestNeighbor(graph, startLocation);
   }
   
   const { path, distance, time } = result;
@@ -821,7 +607,7 @@ export const runSimulation = (params: SimulationParams): SimulationResult => {
 // Import getRouteGraph from maps.ts
 import { getRouteGraph } from '../data/maps';
 
-// Function to get algorithm description
+// Function to get TSP algorithm description
 export const getAlgorithmDescription = (algorithm: Algorithm): {
   name: string;
   description: string;
@@ -833,70 +619,71 @@ export const getAlgorithmDescription = (algorithm: Algorithm): {
   switch (algorithm) {
     case 'brute-force':
       return {
-        name: "Brute Force",
-        description: "Brute force examines all possible paths between the start and end nodes to find the optimal solution. It guarantees finding the best path but at the cost of computational efficiency.",
-        timeComplexity: "O(n!) where n is the number of nodes",
+        name: "Brute Force TSP",
+        description: "Brute force TSP examines all possible tours (permutations of cities) to find the optimal solution. It guarantees finding the shortest tour that visits all cities exactly once and returns to the starting city.",
+        timeComplexity: "O(n!) where n is the number of cities",
         spaceComplexity: "O(n)",
         pros: [
-          "Guarantees the optimal solution",
+          "Guarantees the optimal TSP solution",
           "Simple to understand and implement",
-          "Works for any graph structure"
+          "Works for any complete graph"
         ],
         cons: [
-          "Extremely slow for large graphs",
-          "Exponential time complexity",
-          "Not practical for real-world applications"
+          "Extremely slow for large numbers of cities",
+          "Factorial time complexity makes it impractical",
+          "Only feasible for very small instances (< 10 cities)"
         ]
       };
     case 'dynamic-programming':
       return {
-        name: "Dynamic Programming (Held-Karp)",
-        description: "Dynamic programming solves the shortest path problem by breaking it down into subproblems and storing results to avoid redundant calculations. The Held-Karp algorithm is optimal for the traveling salesman problem.",
-        timeComplexity: "O(n²·2ⁿ) for TSP, O(n³) for shortest path",
-        spaceComplexity: "O(n·2ⁿ) for TSP, O(n²) for shortest path",
+        name: "Dynamic Programming TSP (Held-Karp)",
+        description: "The Held-Karp algorithm uses dynamic programming with bitmasks to solve TSP optimally. It builds up solutions by considering all possible subsets of cities and finding the minimum cost to visit each subset ending at each city.",
+        timeComplexity: "O(n²·2ⁿ) where n is the number of cities",
+        spaceComplexity: "O(n·2ⁿ)",
         pros: [
-          "Optimal solution guaranteed",
-          "Avoids redundant calculations through memoization",
-          "More efficient than brute force"
+          "Guarantees optimal TSP solution",
+          "More efficient than brute force",
+          "Uses memoization to avoid redundant calculations"
         ],
         cons: [
-          "Still exponential for TSP variants",
-          "High memory usage",
-          "Complex implementation"
+          "Still exponential in time and space",
+          "High memory usage due to bitmask table",
+          "Only practical for small to medium instances (< 20 cities)"
         ]
       };
     case 'nearest-neighbor':
       return {
-        name: "Nearest Neighbor (Greedy)",
-        description: "The nearest neighbor algorithm is a greedy approach that always selects the closest unvisited node. While fast and simple, it doesn't guarantee the optimal solution.",
+        name: "Nearest Neighbor TSP",
+        description: "The nearest neighbor heuristic starts at a city and repeatedly visits the nearest unvisited city until all cities are visited, then returns to the start. While fast, it often produces suboptimal tours.",
         timeComplexity: "O(n²)",
         spaceComplexity: "O(n)",
         pros: [
           "Very fast execution",
           "Simple to implement",
-          "Good for real-time applications"
+          "Good for large instances and real-time applications",
+          "Always produces a valid tour"
         ],
         cons: [
           "Does not guarantee optimal solution",
-          "Can get stuck in local optima",
-          "Quality depends on starting point"
+          "Tour quality heavily depends on starting city",
+          "Can produce tours significantly longer than optimal"
         ]
       };
     case 'branch-and-bound':
       return {
-        name: "Branch and Bound",
-        description: "Branch and bound systematically explores the solution space while pruning branches that cannot lead to better solutions. It combines the completeness of brute force with intelligent pruning.",
+        name: "Branch and Bound TSP",
+        description: "Branch and bound systematically explores the solution space of TSP tours while using lower bounds to prune branches that cannot lead to better solutions. It combines completeness with intelligent pruning.",
         timeComplexity: "O(n!) worst case, much better in practice",
         spaceComplexity: "O(n)",
         pros: [
-          "Guarantees optimal solution",
+          "Guarantees optimal TSP solution",
           "More efficient than brute force through pruning",
-          "Can provide bounds on solution quality"
+          "Can provide bounds on solution quality during execution"
         ],
         cons: [
           "Still exponential in worst case",
-          "Performance depends on bounding function quality",
-          "Complex to implement effectively"
+          "Performance depends on quality of bounding function",
+          "Complex to implement effectively for TSP"
         ]
       };
     default:

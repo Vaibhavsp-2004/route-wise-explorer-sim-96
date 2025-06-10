@@ -9,7 +9,7 @@ export interface Location {
 
 export type MapType = 'karnataka' | 'bengaluru' | 'mysuru';
 
-// Algorithm types - updated to match the image
+// Algorithm types - TSP algorithms
 export type Algorithm = 'brute-force' | 'dynamic-programming' | 'nearest-neighbor' | 'branch-and-bound';
 
 export type Weather = 'sunny' | 'rainy' | 'foggy' | 'snowy' | 'windy';
@@ -30,14 +30,13 @@ export interface RouteGraph {
   edges: RouteEdge[];
 }
 
-// Simulation types
+// Simulation types - updated for TSP
 export interface SimulationParams {
   algorithm: Algorithm;
   mapType: MapType;
   weather: Weather;
   timeOfDay: TimeOfDay;
-  startLocation: string;
-  endLocation: string;
+  startLocation: string; // Starting point for TSP tour
   vehicle: Vehicle;
 }
 
@@ -53,6 +52,6 @@ export interface SimulationMetrics {
 
 export interface SimulationResult {
   algorithm: Algorithm;
-  path: string[];
+  path: string[]; // Complete TSP tour (starts and ends at same location)
   metrics: SimulationMetrics;
 }
