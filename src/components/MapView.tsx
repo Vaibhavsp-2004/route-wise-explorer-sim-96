@@ -36,12 +36,19 @@ const nodeIcon = new Icon({
   popupAnchor: [1, -34],
 });
 
-// Function to get route coordinates from path
-const getRouteCoordinates = (path: string[], locations: Record<string, Location>): [number, number][] => {
-  return path.map(nodeId => {
-    const location = locations[nodeId];
-    return [location.lat, location.lng];
-  });
+// Function to get route coordinates from path using location names
+const getRouteCoordinates = (path: string[], locations: Location[]): [number, number][] => {
+  if (!path || !locations) return [];
+  
+  return path.map(locationName => {
+    // Find location by name instead of ID
+    const location = locations.find(loc => loc.name === locationName || loc.id === locationName);
+    if (!location) {
+      console.warn(`Location not found for: ${locationName}`);
+      return [0, 0] as [number, number];
+    }
+    return [location.lat, location.lng] as [number, number];
+  }).filter(coord => coord[0] !== 0 || coord[1] !== 0); // Filter out invalid coordinates
 };
 
 // Get a map of all locations by ID - with safety check
@@ -57,6 +64,7 @@ const getLocationsMap = (mapType: MapType): Record<string, Location> => {
   
   locations.forEach(location => {
     locationsMap[location.id] = location;
+    locationsMap[location.name] = location; // Also map by name for flexibility
   });
   return locationsMap;
 };
@@ -89,23 +97,28 @@ const MapView = ({
   
   const center = getMapCenter(mapType);
   const zoom = getMapZoom(mapType);
-  const locationsMap = getLocationsMap(mapType);
   const locations = mapLocations[mapType] || [];
   
-  // Update route when result changes
+  // Update route when result changes - use stable coordinates
   useEffect(() => {
-    if (result && result.path.length > 0) {
-      setRoutePath(getRouteCoordinates(result.path, locationsMap));
+    if (result && result.path.length > 0 && locations.length > 0) {
+      const coordinates = getRouteCoordinates(result.path, locations);
+      if (coordinates.length > 0) {
+        setRoutePath(coordinates);
+      }
     } else {
       setRoutePath([]);
     }
 
-    if (showCompare && compareResult && compareResult.path.length > 0) {
-      setCompareRoutePath(getRouteCoordinates(compareResult.path, locationsMap));
+    if (showCompare && compareResult && compareResult.path.length > 0 && locations.length > 0) {
+      const compareCoordinates = getRouteCoordinates(compareResult.path, locations);
+      if (compareCoordinates.length > 0) {
+        setCompareRoutePath(compareCoordinates);
+      }
     } else {
       setCompareRoutePath([]);
     }
-  }, [result, compareResult, mapType, locationsMap, showCompare]);
+  }, [result, compareResult, mapType, locations, showCompare]);
   
   useEffect(() => {
     // Add a short delay to ensure DOM is ready
@@ -140,8 +153,8 @@ const MapView = ({
           {locations.map((location) => {
             // Determine which icon to use
             let icon = nodeIcon;
-            if (location.id === startLocation) icon = startIcon;
-            if (location.id === endLocation) icon = endIcon;
+            if (location.id === startLocation || location.name === startLocation) icon = startIcon;
+            if (location.id === endLocation || location.name === endLocation) icon = endIcon;
             
             return (
               <Marker
@@ -157,8 +170,9 @@ const MapView = ({
           })}
           
           {/* Draw primary route if available */}
-          {routePath.length > 0 && (
+          {routePath.length > 1 && (
             <Polyline 
+              key={`primary-${result?.algorithm}-${routePath.length}`}
               positions={routePath} 
               color={result?.algorithm === 'brute-force' ? '#3B82F6' : 
                     result?.algorithm === 'dynamic-programming' ? '#10B981' : 
@@ -171,8 +185,9 @@ const MapView = ({
           )}
 
           {/* Draw comparison route if available */}
-          {showCompare && compareRoutePath.length > 0 && (
+          {showCompare && compareRoutePath.length > 1 && (
             <Polyline 
+              key={`compare-${compareResult?.algorithm}-${compareRoutePath.length}`}
               positions={compareRoutePath} 
               color={compareResult?.algorithm === 'brute-force' ? '#3B82F6' : 
                     compareResult?.algorithm === 'dynamic-programming' ? '#10B981' : 

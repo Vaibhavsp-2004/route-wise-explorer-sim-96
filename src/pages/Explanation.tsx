@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +9,7 @@ import { ChevronLeft } from 'lucide-react';
 
 const Explanation = () => {
   const location = useLocation();
-  const { algorithm, result } = location.state || { algorithm: 'dijkstra', result: null };
+  const { algorithm, result } = location.state || { algorithm: 'brute-force', result: null };
   
   const algorithmInfo = getAlgorithmDescription(algorithm as Algorithm);
   
@@ -63,86 +62,70 @@ const Explanation = () => {
                   </div>
                 </div>
                 
-                {algorithm === 'dijkstra' && (
+                {algorithm === 'brute-force' && (
                   <div className="mt-4">
-                    <h3 className="text-lg font-medium">How Dijkstra's Algorithm Works</h3>
+                    <h3 className="text-lg font-medium">How Brute Force Algorithm Works</h3>
                     <p className="mt-2">
-                      Dijkstra's algorithm maintains a set of visited nodes and distances from the source to each node. 
-                      It repeatedly selects the unvisited node with the minimum distance, marks it as visited, 
-                      and updates the distances to all its neighbors if a shorter path is found.
+                      The Brute Force algorithm exhaustively explores all possible paths between the source and destination nodes.
+                      It generates all permutations of intermediate nodes and calculates the total path cost for each route.
                     </p>
                     <ol className="list-decimal pl-5 mt-2 space-y-1">
-                      <li>Initialize distances of all nodes to infinity except the source node (set to 0)</li>
-                      <li>Create a set of unvisited nodes</li>
-                      <li>While the unvisited set is not empty:
-                        <ul className="list-disc pl-5 mt-1">
-                          <li>Select the unvisited node with the minimum distance</li>
-                          <li>Mark it as visited</li>
-                          <li>Update distances to all adjacent unvisited nodes</li>
-                        </ul>
-                      </li>
-                      <li>When destination is visited or all reachable nodes are visited, the algorithm terminates</li>
+                      <li>Generate all possible permutations of intermediate nodes between source and destination</li>
+                      <li>For each permutation, create a complete path from source to destination</li>
+                      <li>Calculate the total cost for each path by summing edge weights</li>
+                      <li>Compare all paths and select the one with minimum cost</li>
+                      <li>Return the optimal path and its total cost</li>
                     </ol>
                   </div>
                 )}
                 
-                {algorithm === 'astar' && (
+                {algorithm === 'dynamic-programming' && (
                   <div className="mt-4">
-                    <h3 className="text-lg font-medium">How A* Algorithm Works</h3>
+                    <h3 className="text-lg font-medium">How Dynamic Programming Algorithm Works</h3>
                     <p className="mt-2">
-                      A* is an informed search algorithm that uses a heuristic function to guide its path exploration.
-                      It evaluates nodes by combining the cost to reach the node (g-score) and the estimated cost to reach the goal (h-score).
+                      The Dynamic Programming approach uses memoization to store previously computed shortest paths,
+                      avoiding redundant calculations when exploring different routes.
                     </p>
                     <ol className="list-decimal pl-5 mt-2 space-y-1">
-                      <li>Initialize open and closed sets</li>
-                      <li>Add start node to the open set with f-score = g-score + h-score</li>
-                      <li>While the open set is not empty:
-                        <ul className="list-disc pl-5 mt-1">
-                          <li>Select node with lowest f-score from open set</li>
-                          <li>If it's the goal node, reconstruct and return the path</li>
-                          <li>Move current node from open set to closed set</li>
-                          <li>For each neighbor, update scores and add to open set if better path found</li>
-                        </ul>
-                      </li>
+                      <li>Initialize memoization table to store computed subproblem results</li>
+                      <li>For each node, recursively compute shortest path to destination</li>
+                      <li>Store results in memo table to avoid recomputation</li>
+                      <li>Use visited set to prevent cycles during exploration</li>
+                      <li>Return optimal path by combining cached subproblem solutions</li>
                     </ol>
                   </div>
                 )}
                 
-                {algorithm === 'bellman-ford' && (
+                {algorithm === 'nearest-neighbor' && (
                   <div className="mt-4">
-                    <h3 className="text-lg font-medium">How Bellman-Ford Algorithm Works</h3>
+                    <h3 className="text-lg font-medium">How Nearest Neighbor Algorithm Works</h3>
                     <p className="mt-2">
-                      The Bellman-Ford algorithm finds shortest paths from a source vertex to all other vertices, even in graphs with negative weight edges.
-                      It can also detect negative weight cycles.
+                      The Nearest Neighbor algorithm is a greedy approach that always chooses the nearest unvisited node
+                      as the next step in the path construction.
                     </p>
                     <ol className="list-decimal pl-5 mt-2 space-y-1">
-                      <li>Initialize distances of all vertices to infinity except source (set to 0)</li>
-                      <li>Relax all edges |V|-1 times (where |V| is the number of vertices):
-                        <ul className="list-disc pl-5 mt-1">
-                          <li>For each edge (u,v) with weight w, if distance[u] + w &lt; distance[v], update distance[v]</li>
-                        </ul>
-                      </li>
-                      <li>Check for negative weight cycles by attempting one more relaxation</li>
-                      <li>If any distance changes, a negative cycle exists</li>
+                      <li>Start at the source node and mark it as visited</li>
+                      <li>From current node, find all unvisited neighboring nodes</li>
+                      <li>Select the neighbor with minimum edge weight (nearest neighbor)</li>
+                      <li>Move to selected neighbor and mark it as visited</li>
+                      <li>Repeat until destination is reached or no unvisited neighbors exist</li>
                     </ol>
                   </div>
                 )}
                 
-                {algorithm === 'floyd-warshall' && (
+                {algorithm === 'branch-and-bound' && (
                   <div className="mt-4">
-                    <h3 className="text-lg font-medium">How Floyd-Warshall Algorithm Works</h3>
+                    <h3 className="text-lg font-medium">How Branch and Bound Algorithm Works</h3>
                     <p className="mt-2">
-                      Floyd-Warshall is a dynamic programming algorithm that finds shortest paths between all pairs of vertices in a weighted graph.
-                      It considers all possible intermediate vertices for each pair.
+                      Branch and Bound systematically explores the solution space while using bounds to prune
+                      unpromising branches, combining the thoroughness of brute force with intelligent pruning.
                     </p>
                     <ol className="list-decimal pl-5 mt-2 space-y-1">
-                      <li>Initialize distance matrix from the adjacency matrix of the graph</li>
-                      <li>Consider each vertex as an intermediate point for all possible pairs of vertices:
-                        <ul className="list-disc pl-5 mt-1">
-                          <li>For each pair (i,j), check if path through vertex k is shorter: dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])</li>
-                        </ul>
-                      </li>
-                      <li>After all iterations, the matrix contains shortest distances between all pairs of vertices</li>
+                      <li>Initialize priority queue with source node and upper bound to infinity</li>
+                      <li>For each state, calculate lower bound using heuristic (e.g., straight-line distance)</li>
+                      <li>Expand only states whose lower bound is less than current upper bound</li>
+                      <li>When destination is reached, update upper bound if better solution found</li>
+                      <li>Continue until queue is empty or optimal solution confirmed</li>
                     </ol>
                   </div>
                 )}
@@ -163,17 +146,17 @@ const Explanation = () => {
                       <code className="font-mono text-lg">{algorithmInfo.timeComplexity}</code>
                     </div>
                     <p className="mt-2">
-                      {algorithm === 'dijkstra' && 
-                       "Where |V| is the number of vertices and |E| is the number of edges. Using a binary heap priority queue implementation, Dijkstra's algorithm can achieve O((|E|+|V|)log|V|) time complexity."}
+                      {algorithm === 'brute-force' && 
+                       "Where n is the number of nodes. The algorithm explores all possible permutations of intermediate nodes, resulting in factorial time complexity. This makes it impractical for large graphs but guarantees the optimal solution."}
                       
-                      {algorithm === 'astar' && 
-                       "The actual runtime depends heavily on the heuristic function. With a perfect heuristic, A* can find the solution with minimal exploration. With a poor heuristic, it can degrade to Dijkstra's O((|E|+|V|)log|V|) or worse."}
+                      {algorithm === 'dynamic-programming' && 
+                       "Where n is the number of nodes and m is the number of edges. The memoization technique reduces redundant calculations, but in the worst case, it may still need to explore exponential number of states."}
                       
-                      {algorithm === 'bellman-ford' && 
-                       "The algorithm makes |V|-1 passes over all |E| edges, resulting in O(|V|·|E|) time complexity. For dense graphs, this can approach O(|V|³)."}
+                      {algorithm === 'nearest-neighbor' && 
+                       "Where n is the number of nodes and m is the number of edges. At each step, the algorithm examines all neighbors of the current node, making it much faster than exhaustive approaches but potentially suboptimal."}
                       
-                      {algorithm === 'floyd-warshall' && 
-                       "The algorithm uses three nested loops over all vertices, resulting in O(|V|³) time complexity regardless of the graph's density."}
+                      {algorithm === 'branch-and-bound' && 
+                       "The actual runtime heavily depends on the quality of the heuristic function and pruning effectiveness. With good bounds, it can significantly outperform brute force while still guaranteeing optimality."}
                     </p>
                   </div>
                   
@@ -183,17 +166,17 @@ const Explanation = () => {
                       <code className="font-mono text-lg">{algorithmInfo.spaceComplexity}</code>
                     </div>
                     <p className="mt-2">
-                      {algorithm === 'dijkstra' && 
-                       "Space is needed to store the distance values for each vertex, the predecessor/parent pointers for path reconstruction, and the priority queue."}
+                      {algorithm === 'brute-force' && 
+                       "Space is needed to store the current path being explored and the best path found so far. The recursion depth is limited by the number of nodes."}
                       
-                      {algorithm === 'astar' && 
-                       "A* maintains open and closed sets, plus f, g, and h score values for vertices. In worst case, it might need to store all vertices in these collections."}
+                      {algorithm === 'dynamic-programming' && 
+                       "The algorithm requires space for the memoization table, visited set, and recursion stack. In worst case, it might need to store exponential number of states."}
                       
-                      {algorithm === 'bellman-ford' && 
-                       "The algorithm needs space for the distance values and predecessor pointers for each vertex."}
+                      {algorithm === 'nearest-neighbor' && 
+                       "Space is needed for the visited set, current path, and neighbor exploration. The space requirement is linear in the number of nodes."}
                       
-                      {algorithm === 'floyd-warshall' && 
-                       "Floyd-Warshall requires O(|V|²) space for the distance matrix, and an additional O(|V|²) for the next/predecessor matrix if path reconstruction is needed."}
+                      {algorithm === 'branch-and-bound' && 
+                       "Space is required for the priority queue, which in worst case might contain exponential number of states. The actual space usage depends on pruning effectiveness."}
                     </p>
                   </div>
                 </div>
@@ -205,51 +188,44 @@ const Explanation = () => {
                       <thead>
                         <tr>
                           <th className="py-2 px-4 text-left font-medium">Aspect</th>
-                          <th className="py-2 px-4 text-left font-medium">Dijkstra</th>
-                          <th className="py-2 px-4 text-left font-medium">A*</th>
-                          <th className="py-2 px-4 text-left font-medium">Bellman-Ford</th>
-                          <th className="py-2 px-4 text-left font-medium">Floyd-Warshall</th>
+                          <th className="py-2 px-4 text-left font-medium">Brute Force</th>
+                          <th className="py-2 px-4 text-left font-medium">Dynamic Programming</th>
+                          <th className="py-2 px-4 text-left font-medium">Nearest Neighbor</th>
+                          <th className="py-2 px-4 text-left font-medium">Branch and Bound</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
                         <tr>
                           <td className="py-2 px-4 font-medium">Time Complexity</td>
-                          <td className="py-2 px-4">O((|E|+|V|)log|V|)</td>
-                          <td className="py-2 px-4">O((|E|+|V|)log|V|)*</td>
-                          <td className="py-2 px-4">O(|V|·|E|)</td>
-                          <td className="py-2 px-4">O(|V|³)</td>
-                        </tr>
-                        <tr>
-                          <td className="py-2 px-4 font-medium">Negative Edges</td>
-                          <td className="py-2 px-4">No</td>
-                          <td className="py-2 px-4">No</td>
-                          <td className="py-2 px-4">Yes</td>
-                          <td className="py-2 px-4">Yes</td>
-                        </tr>
-                        <tr>
-                          <td className="py-2 px-4 font-medium">All-Pairs</td>
-                          <td className="py-2 px-4">No</td>
-                          <td className="py-2 px-4">No</td>
-                          <td className="py-2 px-4">No</td>
-                          <td className="py-2 px-4">Yes</td>
-                        </tr>
-                        <tr>
-                          <td className="py-2 px-4 font-medium">Heuristic</td>
-                          <td className="py-2 px-4">No</td>
-                          <td className="py-2 px-4">Yes</td>
-                          <td className="py-2 px-4">No</td>
-                          <td className="py-2 px-4">No</td>
+                          <td className="py-2 px-4">O(n!)</td>
+                          <td className="py-2 px-4">O(n·2ⁿ)</td>
+                          <td className="py-2 px-4">O(n·m)</td>
+                          <td className="py-2 px-4">O(2ⁿ)*</td>
                         </tr>
                         <tr>
                           <td className="py-2 px-4 font-medium">Optimal Solution</td>
                           <td className="py-2 px-4">Yes</td>
-                          <td className="py-2 px-4">If admissible</td>
                           <td className="py-2 px-4">Yes</td>
+                          <td className="py-2 px-4">No</td>
                           <td className="py-2 px-4">Yes</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 px-4 font-medium">Practical for Large Graphs</td>
+                          <td className="py-2 px-4">No</td>
+                          <td className="py-2 px-4">Limited</td>
+                          <td className="py-2 px-4">Yes</td>
+                          <td className="py-2 px-4">Better than Brute Force</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 px-4 font-medium">Memory Usage</td>
+                          <td className="py-2 px-4">Low</td>
+                          <td className="py-2 px-4">High</td>
+                          <td className="py-2 px-4">Low</td>
+                          <td className="py-2 px-4">Variable</td>
                         </tr>
                       </tbody>
                     </table>
-                    <p className="text-xs mt-2">* A* complexity depends on the heuristic quality</p>
+                    <p className="text-xs mt-2">* Branch and Bound complexity depends on pruning quality</p>
                   </div>
                 </div>
               </CardContent>
@@ -263,108 +239,50 @@ const Explanation = () => {
               </CardHeader>
               <CardContent>
                 <p className="mb-6">
-                  {algorithm === 'dijkstra' && 
-                   "Dijkstra's algorithm works by maintaining a priority queue of vertices, always processing the vertex with the current shortest distance from the source. Here's how it would execute on a simple graph:"}
-                  {algorithm === 'astar' && 
-                   "A* algorithm maintains open and closed sets of nodes, and uses a heuristic to guide the search toward the destination. This visualization shows how it would explore nodes in a graph:"}
-                  {algorithm === 'bellman-ford' && 
-                   "Bellman-Ford works by relaxing all edges in the graph repeatedly. This visualization shows how distances are updated in each iteration:"}
-                  {algorithm === 'floyd-warshall' && 
-                   "Floyd-Warshall algorithm considers each vertex as an intermediate in paths between all pairs of vertices. Here's how the distance matrix evolves:"}
+                  {algorithm === 'brute-force' && 
+                   "The Brute Force algorithm works by generating all possible permutations of intermediate nodes and calculating the total path cost for each route. Here's how it would execute on a simple graph:"}
+                  {algorithm === 'dynamic-programming' && 
+                   "Dynamic Programming algorithm uses memoization to store previously computed shortest paths, avoiding redundant calculations. This visualization shows how it would explore nodes in a graph:"}
+                  {algorithm === 'nearest-neighbor' && 
+                   "The Nearest Neighbor algorithm works by always choosing the nearest unvisited node as the next step in the path construction. This visualization shows how it would explore nodes in a graph:"}
+                  {algorithm === 'branch-and-bound' && 
+                   "Branch and Bound algorithm systematically explores the solution space while using bounds to prune unpromising branches. This visualization shows how it would explore nodes in a graph:"}
                 </p>
                 
                 <div className="bg-muted rounded-lg p-4 mb-6">
                   <h3 className="text-lg font-medium mb-4">Pseudocode</h3>
                   <pre className="font-mono text-sm overflow-x-auto p-2">
-                    {algorithm === 'dijkstra' && 
-                     `function dijkstra(graph, source):
-    dist[source] ← 0
-    create vertex priority queue Q
-    
-    for each vertex v in graph:
-        if v ≠ source
-            dist[v] ← INFINITY
-        prev[v] ← UNDEFINED
-        add v to Q
-    
-    while Q is not empty:
-        u ← vertex in Q with min dist[u]
-        remove u from Q
-        
-        for each neighbor v of u:
-            alt ← dist[u] + length(u, v)
-            if alt < dist[v]:
-                dist[v] ← alt
-                prev[v] ← u
-                decrease-key v in Q
-    
-    return dist[], prev[]`}
+                    {algorithm === 'brute-force' && 
+                     `function brute_force(graph, source, destination):
+    generate all permutations of intermediate nodes between source and destination
+    for each permutation, create a complete path from source to destination
+    calculate the total cost for each path by summing edge weights
+    compare all paths and select the one with minimum cost
+    return the optimal path and its total cost`}
                     
-                    {algorithm === 'astar' && 
-                     `function A*(start, goal):
-    openSet ← {start}
-    cameFrom ← an empty map
-    
-    gScore ← map with default value of INFINITY
-    gScore[start] ← 0
-    
-    fScore ← map with default value of INFINITY
-    fScore[start] ← h(start)
-    
-    while openSet is not empty:
-        current ← node in openSet with lowest fScore
-        if current = goal:
-            return reconstruct_path(cameFrom, current)
-        
-        remove current from openSet
-        
-        for each neighbor of current:
-            tentative_gScore ← gScore[current] + d(current, neighbor)
-            if tentative_gScore < gScore[neighbor]:
-                cameFrom[neighbor] ← current
-                gScore[neighbor] ← tentative_gScore
-                fScore[neighbor] ← gScore[neighbor] + h(neighbor)
-                if neighbor not in openSet:
-                    add neighbor to openSet
-    
-    return failure`}
+                    {algorithm === 'dynamic-programming' && 
+                     `function dynamic_programming(graph, source, destination):
+    initialize memoization table to store computed subproblem results
+    for each node, recursively compute shortest path to destination
+    store results in memo table to avoid recomputation
+    use visited set to prevent cycles during exploration
+    return optimal path by combining cached subproblem solutions`}
                     
-                    {algorithm === 'bellman-ford' && 
-                     `function BellmanFord(graph, source):
-    dist[source] ← 0
-    
-    for each vertex v in graph:
-        if v ≠ source
-            dist[v] ← INFINITY
-        prev[v] ← UNDEFINED
-    
-    // Relax edges |V| - 1 times
-    for i from 1 to |V| - 1:
-        for each edge (u, v) with weight w in graph:
-            if dist[u] + w < dist[v]:
-                dist[v] ← dist[u] + w
-                prev[v] ← u
-    
-    // Check for negative-weight cycles
-    for each edge (u, v) with weight w in graph:
-        if dist[u] + w < dist[v]:
-            error "Graph contains a negative-weight cycle"
-    
-    return dist[], prev[]`}
+                    {algorithm === 'nearest-neighbor' && 
+                     `function nearest_neighbor(graph, source, destination):
+    start at the source node and mark it as visited
+    from current node, find all unvisited neighboring nodes
+    select the neighbor with minimum edge weight (nearest neighbor)
+    move to selected neighbor and mark it as visited
+    repeat until destination is reached or no unvisited neighbors exist`}
                     
-                    {algorithm === 'floyd-warshall' && 
-                     `function FloydWarshall(graph):
-    dist ← |V| × |V| matrix initialized from adjacency matrix
-    next ← |V| × |V| matrix for path reconstruction
-    
-    for k from 1 to |V|:
-        for i from 1 to |V|:
-            for j from 1 to |V|:
-                if dist[i][j] > dist[i][k] + dist[k][j]:
-                    dist[i][j] ← dist[i][k] + dist[k][j]
-                    next[i][j] ← next[i][k]
-    
-    return dist, next`}
+                    {algorithm === 'branch-and-bound' && 
+                     `function branch_and_bound(graph, source, destination):
+    initialize priority queue with source node and upper bound to infinity
+    for each state, calculate lower bound using heuristic (e.g., straight-line distance)
+    expand only states whose lower bound is less than current upper bound
+    when destination is reached, update upper bound if better solution found
+    continue until queue is empty or optimal solution confirmed`}
                   </pre>
                 </div>
                 
@@ -373,14 +291,14 @@ const Explanation = () => {
                   {result ? (
                     <div className="space-y-4">
                       <p>
-                        {algorithm === 'dijkstra' && 
-                         "In the simulation, Dijkstra's algorithm initialized distances, set the source to 0, and then repeatedly selected the node with the minimum distance. It processed nodes in increasing order of distance from the source, updating neighbor distances when shorter paths were found."}
-                        {algorithm === 'astar' && 
-                         "The A* algorithm in this simulation used a heuristic based on straight-line distance to guide its search toward the destination. It maintained open and closed sets, always expanding the node with the lowest f-score (g-score + heuristic)."}
-                        {algorithm === 'bellman-ford' && 
-                         "The Bellman-Ford algorithm in this simulation initialized distances and then performed repeated edge relaxations. It processed all edges in each pass, updating distances when shorter paths were found."}
-                        {algorithm === 'floyd-warshall' && 
-                         "The Floyd-Warshall algorithm calculated shortest paths between all pairs of nodes in the graph. It considered each node as an intermediate point for all possible pairs, updating the distance matrix when shorter paths were found."}
+                        {algorithm === 'brute-force' && 
+                         "In the simulation, the Brute Force algorithm generated all possible permutations of intermediate nodes and calculated the total path cost for each route. It selected the route with the minimum cost."}
+                        {algorithm === 'dynamic-programming' && 
+                         "The Dynamic Programming algorithm in this simulation used memoization to store previously computed shortest paths, avoiding redundant calculations. It explored nodes in a graph and selected the optimal path."}
+                        {algorithm === 'nearest-neighbor' && 
+                         "The Nearest Neighbor algorithm in this simulation always chose the nearest unvisited node as the next step in the path construction. It explored nodes in a graph and selected the optimal path."}
+                        {algorithm === 'branch-and-bound' && 
+                         "The Branch and Bound algorithm in this simulation systematically explored the solution space while using bounds to prune unpromising branches. It selected the optimal path."}
                       </p>
                       
                       <div className="border border-border rounded-md p-4">
@@ -418,23 +336,20 @@ const Explanation = () => {
               <CardContent className="space-y-4">
                 <div>
                   <h3 className="text-lg font-medium">Common Use Cases</h3>
-                  {algorithm === 'dijkstra' && (
+                  {algorithm === 'brute-force' && (
                     <div className="mt-2 space-y-4">
                       <p>
-                        Dijkstra's algorithm is one of the most widely used pathfinding algorithms in real-world applications, particularly where finding the shortest or least-cost path is critical.
+                        The Brute Force algorithm is useful in scenarios where finding the shortest or least-cost path is critical and the graph is small enough to explore all possible paths.
                       </p>
                       <ul className="list-disc pl-5 space-y-2">
                         <li>
-                          <strong>GPS Navigation Systems:</strong> Used in GPS and navigation apps to find the shortest route between locations.
+                          <strong>Optimization Problems:</strong> Used in optimization problems where the goal is to find the best possible solution among many alternatives.
                         </li>
                         <li>
-                          <strong>Network Routing Protocols:</strong> Used in network routing to find the most efficient path for data packets.
+                          <strong>Game Development:</strong> Used in game development for pathfinding in complex environments.
                         </li>
                         <li>
-                          <strong>Traffic Management Systems:</strong> Used to calculate optimal routes based on current traffic conditions.
-                        </li>
-                        <li>
-                          <strong>Logistics and Supply Chain:</strong> Used for optimizing delivery routes and supply chain logistics.
+                          <strong>Network Routing:</strong> Used in network routing to find the most efficient path for data packets.
                         </li>
                         <li>
                           <strong>Robotics:</strong> Used for path planning in robotics navigation systems.
@@ -443,76 +358,67 @@ const Explanation = () => {
                     </div>
                   )}
                   
-                  {algorithm === 'astar' && (
+                  {algorithm === 'dynamic-programming' && (
                     <div className="mt-2 space-y-4">
                       <p>
-                        A* algorithm is particularly useful in applications where a target location is known and a heuristic can guide the search more efficiently.
+                        Dynamic Programming is particularly useful in scenarios where the problem can be broken down into overlapping subproblems and optimal solutions to subproblems can be combined to solve the original problem.
                       </p>
                       <ul className="list-disc pl-5 space-y-2">
                         <li>
-                          <strong>Video Games:</strong> Widely used for pathfinding in games to guide NPCs through complex environments.
+                          <strong>Optimization Problems:</strong> Used in optimization problems where the goal is to find the best possible solution among many alternatives.
                         </li>
                         <li>
-                          <strong>Robotics:</strong> Used for robot navigation, especially in known environments with obstacles.
+                          <strong>Game Development:</strong> Used in game development for pathfinding in complex environments.
                         </li>
                         <li>
-                          <strong>Artificial Intelligence:</strong> Used in AI systems for problem-solving and path planning.
+                          <strong>Network Routing:</strong> Used in network routing to find the most efficient path for data packets.
                         </li>
                         <li>
-                          <strong>Virtual Reality:</strong> Used for character movement and navigation in VR environments.
-                        </li>
-                        <li>
-                          <strong>Geographic Information Systems:</strong> Used for route planning with geographic constraints.
+                          <strong>Robotics:</strong> Used for path planning in robotics navigation systems.
                         </li>
                       </ul>
                     </div>
                   )}
                   
-                  {algorithm === 'bellman-ford' && (
+                  {algorithm === 'nearest-neighbor' && (
                     <div className="mt-2 space-y-4">
                       <p>
-                        The Bellman-Ford algorithm is valuable in scenarios where negative edge weights exist or where detecting negative cycles is important.
+                        The Nearest Neighbor algorithm is a greedy approach that is useful in scenarios where the graph is small and the goal is to find a good approximate solution quickly.
                       </p>
                       <ul className="list-disc pl-5 space-y-2">
                         <li>
-                          <strong>Network Routing Protocols:</strong> Used in distance-vector routing protocols like RIP (Routing Information Protocol).
+                          <strong>Optimization Problems:</strong> Used in optimization problems where the goal is to find the best possible solution among many alternatives.
                         </li>
                         <li>
-                          <strong>Currency Exchange:</strong> Used to detect arbitrage opportunities in currency exchange markets.
+                          <strong>Game Development:</strong> Used in game development for pathfinding in complex environments.
                         </li>
                         <li>
-                          <strong>Resource Allocation:</strong> Used in systems where resources can have negative costs or gains.
+                          <strong>Network Routing:</strong> Used in network routing to find the most efficient path for data packets.
                         </li>
                         <li>
-                          <strong>Traffic Systems:</strong> Used in traffic systems where certain routes might have incentives (negative weights).
-                        </li>
-                        <li>
-                          <strong>Financial Modeling:</strong> Used in financial models where cash flows can be positive or negative.
+                          <strong>Robotics:</strong> Used for path planning in robotics navigation systems.
                         </li>
                       </ul>
                     </div>
                   )}
                   
-                  {algorithm === 'floyd-warshall' && (
+                  {algorithm === 'branch-and-bound' && (
                     <div className="mt-2 space-y-4">
                       <p>
-                        Floyd-Warshall algorithm is especially useful when all-pairs shortest paths are needed, despite its higher computational complexity.
+                        Branch and Bound is a systematic approach that is useful in scenarios where the problem can be broken down into overlapping subproblems and optimal solutions to subproblems can be combined to solve the original problem.
                       </p>
                       <ul className="list-disc pl-5 space-y-2">
                         <li>
-                          <strong>Network Analysis:</strong> Used to analyze connectivity and distances in entire networks.
+                          <strong>Optimization Problems:</strong> Used in optimization problems where the goal is to find the best possible solution among many alternatives.
                         </li>
                         <li>
-                          <strong>Transit Systems:</strong> Used for calculating complete distance tables for transit systems.
+                          <strong>Game Development:</strong> Used in game development for pathfinding in complex environments.
                         </li>
                         <li>
-                          <strong>Computer Networks:</strong> Used in routing table initialization for networks.
+                          <strong>Network Routing:</strong> Used in network routing to find the most efficient path for data packets.
                         </li>
                         <li>
-                          <strong>Geometric Computations:</strong> Used in computational geometry for problems requiring distances between all pairs of points.
-                        </li>
-                        <li>
-                          <strong>Traffic Engineering:</strong> Used for analyzing traffic patterns and planning in entire road networks.
+                          <strong>Robotics:</strong> Used for path planning in robotics navigation systems.
                         </li>
                       </ul>
                     </div>
@@ -531,17 +437,17 @@ const Explanation = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border">
-                        {algorithm === 'dijkstra' && (
+                        {algorithm === 'brute-force' && (
                           <>
                             <tr>
-                              <td className="py-2 px-4 font-medium">Dense city networks</td>
+                              <td className="py-2 px-4 font-medium">Small graphs</td>
                               <td className="py-2 px-4">Good</td>
-                              <td className="py-2 px-4">Efficient for finding shortest paths in dense road networks</td>
+                              <td className="py-2 px-4">Efficient for small graphs where all possible paths can be explored</td>
                             </tr>
                             <tr>
-                              <td className="py-2 px-4 font-medium">Large-scale networks</td>
-                              <td className="py-2 px-4">Moderate</td>
-                              <td className="py-2 px-4">Can become slow for very large networks without optimizations</td>
+                              <td className="py-2 px-4 font-medium">Large graphs</td>
+                              <td className="py-2 px-4">Poor</td>
+                              <td className="py-2 px-4">Impractical for large graphs due to factorial time complexity</td>
                             </tr>
                             <tr>
                               <td className="py-2 px-4 font-medium">Dynamic conditions</td>
@@ -556,77 +462,77 @@ const Explanation = () => {
                           </>
                         )}
                         
-                        {algorithm === 'astar' && (
+                        {algorithm === 'dynamic-programming' && (
                           <>
                             <tr>
-                              <td className="py-2 px-4 font-medium">Target-directed search</td>
-                              <td className="py-2 px-4">Excellent</td>
-                              <td className="py-2 px-4">Very efficient when a good heuristic is available</td>
-                            </tr>
-                            <tr>
-                              <td className="py-2 px-4 font-medium">Grid-based maps</td>
-                              <td className="py-2 px-4">Excellent</td>
-                              <td className="py-2 px-4">Works particularly well in grid environments</td>
-                            </tr>
-                            <tr>
-                              <td className="py-2 px-4 font-medium">Complex terrain</td>
+                              <td className="py-2 px-4 font-medium">Small graphs</td>
                               <td className="py-2 px-4">Good</td>
-                              <td className="py-2 px-4">Handles obstacles and terrain well with appropriate heuristics</td>
+                              <td className="py-2 px-4">Efficient for small graphs where all possible paths can be explored</td>
                             </tr>
                             <tr>
-                              <td className="py-2 px-4 font-medium">Poor heuristic</td>
-                              <td className="py-2 px-4">Moderate</td>
-                              <td className="py-2 px-4">Degrades to Dijkstra's performance with a poor heuristic</td>
+                              <td className="py-2 px-4 font-medium">Large graphs</td>
+                              <td className="py-2 px-4">Poor</td>
+                              <td className="py-2 px-4">Impractical for large graphs due to exponential time complexity</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-4 font-medium">Dynamic conditions</td>
+                              <td className="py-2 px-4">Good</td>
+                              <td className="py-2 px-4">Can be rerun efficiently when edge weights change</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-4 font-medium">Negative weights</td>
+                              <td className="py-2 px-4">Poor</td>
+                              <td className="py-2 px-4">Cannot handle negative edge weights</td>
                             </tr>
                           </>
                         )}
                         
-                        {algorithm === 'bellman-ford' && (
+                        {algorithm === 'nearest-neighbor' && (
                           <>
                             <tr>
-                              <td className="py-2 px-4 font-medium">Networks with negative weights</td>
+                              <td className="py-2 px-4 font-medium">Small graphs</td>
                               <td className="py-2 px-4">Good</td>
-                              <td className="py-2 px-4">One of few algorithms that can handle negative edge weights</td>
+                              <td className="py-2 px-4">Efficient for small graphs where all possible paths can be explored</td>
                             </tr>
                             <tr>
-                              <td className="py-2 px-4 font-medium">Detecting negative cycles</td>
-                              <td className="py-2 px-4">Excellent</td>
-                              <td className="py-2 px-4">Can detect and report negative weight cycles</td>
-                            </tr>
-                            <tr>
-                              <td className="py-2 px-4 font-medium">Large networks</td>
+                              <td className="py-2 px-4 font-medium">Large graphs</td>
                               <td className="py-2 px-4">Poor</td>
-                              <td className="py-2 px-4">Slower than Dijkstra's for large networks</td>
+                              <td className="py-2 px-4">Impractical for large graphs due to exponential time complexity</td>
                             </tr>
                             <tr>
-                              <td className="py-2 px-4 font-medium">Distributed systems</td>
+                              <td className="py-2 px-4 font-medium">Dynamic conditions</td>
                               <td className="py-2 px-4">Good</td>
-                              <td className="py-2 px-4">Can be implemented in distributed fashion</td>
+                              <td className="py-2 px-4">Can be rerun efficiently when edge weights change</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-4 font-medium">Negative weights</td>
+                              <td className="py-2 px-4">Poor</td>
+                              <td className="py-2 px-4">Cannot handle negative edge weights</td>
                             </tr>
                           </>
                         )}
                         
-                        {algorithm === 'floyd-warshall' && (
+                        {algorithm === 'branch-and-bound' && (
                           <>
                             <tr>
-                              <td className="py-2 px-4 font-medium">All-pairs shortest paths</td>
-                              <td className="py-2 px-4">Excellent</td>
-                              <td className="py-2 px-4">Optimal for finding all shortest paths at once</td>
-                            </tr>
-                            <tr>
-                              <td className="py-2 px-4 font-medium">Small to medium networks</td>
+                              <td className="py-2 px-4 font-medium">Small graphs</td>
                               <td className="py-2 px-4">Good</td>
-                              <td className="py-2 px-4">Works well for networks with up to a few thousand nodes</td>
+                              <td className="py-2 px-4">Efficient for small graphs where all possible paths can be explored</td>
                             </tr>
                             <tr>
-                              <td className="py-2 px-4 font-medium">Large networks</td>
+                              <td className="py-2 px-4 font-medium">Large graphs</td>
                               <td className="py-2 px-4">Poor</td>
-                              <td className="py-2 px-4">O(n³) complexity makes it impractical for very large networks</td>
+                              <td className="py-2 px-4">Impractical for large graphs due to exponential time complexity</td>
                             </tr>
                             <tr>
-                              <td className="py-2 px-4 font-medium">Transitive closure</td>
-                              <td className="py-2 px-4">Excellent</td>
-                              <td className="py-2 px-4">Well-suited for transitive closure computation</td>
+                              <td className="py-2 px-4 font-medium">Dynamic conditions</td>
+                              <td className="py-2 px-4">Good</td>
+                              <td className="py-2 px-4">Can be rerun efficiently when edge weights change</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-4 font-medium">Negative weights</td>
+                              <td className="py-2 px-4">Poor</td>
+                              <td className="py-2 px-4">Cannot handle negative edge weights</td>
                             </tr>
                           </>
                         )}
@@ -638,17 +544,17 @@ const Explanation = () => {
                 <div className="mt-6">
                   <h3 className="text-lg font-medium">Relevance to Current Technology</h3>
                   <p className="mt-2">
-                    {algorithm === 'dijkstra' && 
-                     "Despite being developed in 1956, Dijkstra's algorithm remains fundamental to modern navigation systems and network routing. It forms the basis for many specialized routing algorithms and continues to be enhanced with various optimizations like bidirectional search and hierarchical techniques."}
+                    {algorithm === 'brute-force' && 
+                     "Despite being developed in 1956, the Brute Force algorithm remains fundamental to modern navigation systems and network routing. It forms the basis for many specialized routing algorithms and continues to be enhanced with various optimizations like bidirectional search and hierarchical techniques."}
                     
-                    {algorithm === 'astar' && 
-                     "A* remains the algorithm of choice for pathfinding in modern video games and robotics. Recent advancements have focused on developing better heuristics, implementing hierarchical versions for large environments, and parallelizing the algorithm for better performance."}
+                    {algorithm === 'dynamic-programming' && 
+                     "Dynamic Programming is a powerful algorithm that is widely used in optimization problems and game development. It is particularly useful in scenarios where the problem can be broken down into overlapping subproblems and optimal solutions to subproblems can be combined to solve the original problem."}
                     
-                    {algorithm === 'bellman-ford' && 
-                     "Bellman-Ford is still used in networking protocols and financial applications where negative weights are meaningful. Modern implementations often incorporate optimizations like early termination and are sometimes combined with other algorithms in hybrid approaches."}
+                    {algorithm === 'nearest-neighbor' && 
+                     "The Nearest Neighbor algorithm is a simple and efficient approach that is useful in scenarios where the graph is small and the goal is to find a good approximate solution quickly."}
                     
-                    {algorithm === 'floyd-warshall' && 
-                     "While Floyd-Warshall's O(n³) complexity limits its use in very large networks, it remains valuable for smaller networks where all-pairs shortest paths are needed. It's also used as a subroutine in many graph algorithms and in preprocessing phases of more complex routing systems."}
+                    {algorithm === 'branch-and-bound' && 
+                     "Branch and Bound is a systematic approach that is useful in scenarios where the problem can be broken down into overlapping subproblems and optimal solutions to subproblems can be combined to solve the original problem."}
                   </p>
                 </div>
               </CardContent>
