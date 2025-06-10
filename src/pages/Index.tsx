@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import TabbedSidebar from '../components/TabbedSidebar';
@@ -45,7 +44,7 @@ const Index = () => {
       // Run the TSP simulation
       const simulationResult = runSimulation(params);
       
-      // Check if tour was found
+      // Check if TSP tour was found
       if (simulationResult.path.length === 0) {
         toast.warning("No valid TSP tour found for the selected cities");
       } else {
@@ -155,7 +154,7 @@ const Index = () => {
           
           {viewMode === 'simulation' && (
             <>
-              {/* Algorithm comparison selector */}
+              {/* TSP Algorithm comparison selector */}
               <div className="bg-muted/40 p-4 rounded-md border">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-2">
@@ -189,7 +188,7 @@ const Index = () => {
                 
                 {compareAlgorithm && compareResult && (
                   <div className="mt-3 text-sm text-muted-foreground">
-                    Comparing {params.algorithm} (solid line) with {compareAlgorithm} (dashed line)
+                    Comparing {params.algorithm} (solid line) with {compareAlgorithm} (dashed line) for TSP tour
                   </div>
                 )}
               </div>
@@ -212,7 +211,6 @@ const Index = () => {
                     result={result} 
                     compareResult={compareResult}
                     startLocation={params.startLocation}
-                    endLocation={params.startLocation} // TSP returns to start
                     showCompare={!!compareAlgorithm && !!compareResult}
                   />
                 </div>

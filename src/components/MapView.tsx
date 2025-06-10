@@ -10,7 +10,6 @@ interface MapViewProps {
   result: SimulationResult | null;
   compareResult: SimulationResult | null;
   startLocation: string;
-  endLocation: string;
   showCompare?: boolean;
 }
 
@@ -22,21 +21,14 @@ const startIcon = new Icon({
   popupAnchor: [1, -34],
 });
 
-const endIcon = new Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-});
-
-const nodeIcon = new Icon({
+const visitedIcon = new Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
 });
 
-// Function to get route coordinates from path using location names
+// Function to get route coordinates from TSP path using location names
 const getRouteCoordinates = (path: string[], locations: Location[]): [number, number][] => {
   if (!path || !locations) return [];
   
@@ -51,25 +43,7 @@ const getRouteCoordinates = (path: string[], locations: Location[]): [number, nu
   }).filter(coord => coord[0] !== 0 || coord[1] !== 0); // Filter out invalid coordinates
 };
 
-// Get a map of all locations by ID - with safety check
-const getLocationsMap = (mapType: MapType): Record<string, Location> => {
-  const locationsMap: Record<string, Location> = {};
-  const locations = mapLocations[mapType];
-  
-  // Safety check to ensure locations exist
-  if (!locations || !Array.isArray(locations)) {
-    console.error(`No locations found for mapType: ${mapType}`);
-    return {};
-  }
-  
-  locations.forEach(location => {
-    locationsMap[location.id] = location;
-    locationsMap[location.name] = location; // Also map by name for flexibility
-  });
-  return locationsMap;
-};
-
-// MapUpdater component separated for clarity
+// MapUpdater component for handling map view changes
 const MapUpdater = ({ mapType, result }: { mapType: MapType, result: SimulationResult | null }) => {
   const map = useMap();
   
@@ -87,7 +61,6 @@ const MapView = ({
   result, 
   compareResult,
   startLocation, 
-  endLocation,
   showCompare = false
 }: MapViewProps) => {
   const [initialized, setInitialized] = useState(false);
@@ -99,7 +72,7 @@ const MapView = ({
   const zoom = getMapZoom(mapType);
   const locations = mapLocations[mapType] || [];
   
-  // Update route when result changes - use stable coordinates
+  // Update TSP route when result changes
   useEffect(() => {
     if (result && result.path.length > 0 && locations.length > 0) {
       const coordinates = getRouteCoordinates(result.path, locations);
@@ -130,7 +103,7 @@ const MapView = ({
   }, []);
   
   if (!initialized) {
-    return <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">Loading map...</div>;
+    return <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">Loading TSP map...</div>;
   }
   
   return (
@@ -149,12 +122,13 @@ const MapView = ({
           
           <MapUpdater mapType={mapType} result={result} />
           
-          {/* Place markers for all locations */}
+          {/* Place markers for all locations in TSP tour */}
           {locations.map((location) => {
-            // Determine which icon to use
-            let icon = nodeIcon;
-            if (location.id === startLocation || location.name === startLocation) icon = startIcon;
-            if (location.id === endLocation || location.name === endLocation) icon = endIcon;
+            // Determine which icon to use - start location gets special icon
+            let icon = visitedIcon;
+            if (location.id === startLocation || location.name === startLocation) {
+              icon = startIcon;
+            }
             
             return (
               <Marker
@@ -164,15 +138,18 @@ const MapView = ({
               >
                 <Popup>
                   <strong>{location.name}</strong>
+                  {(location.id === startLocation || location.name === startLocation) && (
+                    <div className="text-sm text-green-600">TSP Start/End Point</div>
+                  )}
                 </Popup>
               </Marker>
             );
           })}
           
-          {/* Draw primary route if available */}
+          {/* Draw primary TSP route if available */}
           {routePath.length > 1 && (
             <Polyline 
-              key={`primary-${result?.algorithm}-${routePath.length}`}
+              key={`primary-tsp-${result?.algorithm}-${routePath.length}`}
               positions={routePath} 
               color={result?.algorithm === 'brute-force' ? '#3B82F6' : 
                     result?.algorithm === 'dynamic-programming' ? '#10B981' : 
@@ -180,14 +157,14 @@ const MapView = ({
                     '#F59E0B'}
               weight={5}
               opacity={0.8}
-              className="algorithm-route"
+              className="tsp-route"
             />
           )}
 
-          {/* Draw comparison route if available */}
+          {/* Draw comparison TSP route if available */}
           {showCompare && compareRoutePath.length > 1 && (
             <Polyline 
-              key={`compare-${compareResult?.algorithm}-${compareRoutePath.length}`}
+              key={`compare-tsp-${compareResult?.algorithm}-${compareRoutePath.length}`}
               positions={compareRoutePath} 
               color={compareResult?.algorithm === 'brute-force' ? '#3B82F6' : 
                     compareResult?.algorithm === 'dynamic-programming' ? '#10B981' : 
@@ -196,7 +173,7 @@ const MapView = ({
               weight={5}
               opacity={0.6}
               dashArray="5,10"
-              className="algorithm-compare-route"
+              className="tsp-compare-route"
             />
           )}
         </MapContainer>

@@ -22,19 +22,18 @@ interface ScenarioManagerProps {
   onRunSimulation: () => void;
 }
 
-// Example scenarios with explanations
+// Example TSP scenarios with explanations
 const exampleScenarios: Scenario[] = [
   {
     id: 'example-1',
-    name: 'Urban Rush Hour',
-    description: 'Simulates heavy traffic conditions in a city during peak hours. Tests how algorithms handle high-congestion scenarios.',
+    name: 'Urban TSP Rush Hour',
+    description: 'TSP tour through Bengaluru during heavy traffic conditions. Tests how algorithms handle high-congestion scenarios when visiting all cities.',
     params: {
       algorithm: 'nearest-neighbor',
       mapType: 'bengaluru',
       weather: 'rainy',
       timeOfDay: 'morning',
       startLocation: 'b1',
-      endLocation: 'b4',
       vehicle: 'car'
     },
     createdAt: new Date().toISOString(),
@@ -42,15 +41,14 @@ const exampleScenarios: Scenario[] = [
   },
   {
     id: 'example-2',
-    name: 'Emergency Route',
-    description: 'Emergency vehicle routing in adverse weather. Compares Dynamic Programming vs Nearest Neighbor for time-critical scenarios.',
+    name: 'Emergency TSP Route',
+    description: 'Emergency vehicle TSP routing in adverse weather. Compares Dynamic Programming vs Nearest Neighbor for time-critical TSP scenarios.',
     params: {
       algorithm: 'dynamic-programming',
       mapType: 'bengaluru',
       weather: 'foggy',
       timeOfDay: 'night',
       startLocation: 'b1',
-      endLocation: 'b5',
       vehicle: 'ambulance'
     },
     createdAt: new Date().toISOString(),
@@ -58,15 +56,14 @@ const exampleScenarios: Scenario[] = [
   },
   {
     id: 'example-3',
-    name: 'Karnataka Long Distance',
-    description: 'Long-distance delivery across Karnataka. Tests algorithm efficiency on sparse networks.',
+    name: 'Karnataka State TSP',
+    description: 'Long-distance TSP tour across Karnataka. Tests algorithm efficiency on sparse networks for complete state coverage.',
     params: {
       algorithm: 'branch-and-bound',
       mapType: 'karnataka',
       weather: 'sunny',
       timeOfDay: 'afternoon',
       startLocation: 'k1',
-      endLocation: 'k8',
       vehicle: 'truck'
     },
     createdAt: new Date().toISOString(),
@@ -74,15 +71,14 @@ const exampleScenarios: Scenario[] = [
   },
   {
     id: 'example-4',
-    name: 'Mysuru Eco Route',
-    description: 'Electric vehicle routing through Mysuru. Optimizes for energy efficiency and range.',
+    name: 'Mysuru Eco TSP',
+    description: 'Electric vehicle TSP routing through Mysuru. Optimizes for energy efficiency and range while visiting all cities.',
     params: {
       algorithm: 'brute-force',
       mapType: 'mysuru',
       weather: 'windy',
       timeOfDay: 'evening',
       startLocation: 'm1',
-      endLocation: 'm6',
       vehicle: 'ev'
     },
     createdAt: new Date().toISOString(),
@@ -340,3 +336,5 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
 };
 
 export default ScenarioManager;
+
+}
