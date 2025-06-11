@@ -336,5 +336,3 @@ const ScenarioManager: React.FC<ScenarioManagerProps> = ({
 };
 
 export default ScenarioManager;
-
-}
