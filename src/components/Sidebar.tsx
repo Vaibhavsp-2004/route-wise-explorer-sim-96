@@ -172,8 +172,8 @@ const Sidebar = ({ params, setParams, onRunSimulation, tabbed = false }: Sidebar
             </div>
 
             {/* TSP Info */}
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
-              <p className="text-xs text-blue-800">
+            <div className="p-3 bg-muted border border-sidebar-border rounded-md">
+              <p className="text-xs text-sidebar-foreground">
                 <strong>TSP (Traveling Salesman Problem):</strong> Find the shortest tour that visits all cities exactly once and returns to the starting city.
               </p>
             </div>
