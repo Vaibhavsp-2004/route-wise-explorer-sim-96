@@ -15,7 +15,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { exportToPDF } from '../utils/pdfExport';
-
 const Index = () => {
   // Initialize simulation parameters for TSP
   const [params, setParams] = useState<SimulationParams>({
@@ -24,50 +23,50 @@ const Index = () => {
     weather: 'sunny',
     timeOfDay: 'afternoon',
     startLocation: mapLocations.karnataka[0].id,
-    vehicle: 'car',
+    vehicle: 'car'
   });
-  
   const [result, setResult] = useState<SimulationResult | null>(null);
   const [compareAlgorithm, setCompareAlgorithm] = useState<Algorithm | null>(null);
   const [compareResult, setCompareResult] = useState<SimulationResult | null>(null);
   const [viewMode, setViewMode] = useState<'simulation' | 'graph'>('simulation');
   const [sidebarTab, setSidebarTab] = useState('simulation');
-  
+
   // Set dark theme on mount
   useEffect(() => {
     document.documentElement.classList.add('dark');
   }, []);
-  
+
   // Handle running the TSP simulation
   const handleRunSimulation = () => {
     try {
       // Run the TSP simulation
       const simulationResult = runSimulation(params);
-      
+
       // Check if TSP tour was found
       if (simulationResult.path.length === 0) {
         toast.warning("No valid TSP tour found for the selected cities");
       } else {
         toast.success("TSP tour calculated successfully!");
       }
-      
       setResult(simulationResult);
-      
+
       // Also run comparison algorithm if selected
       if (compareAlgorithm) {
-        const comparisonParams = {...params, algorithm: compareAlgorithm};
+        const comparisonParams = {
+          ...params,
+          algorithm: compareAlgorithm
+        };
         const comparisonResult = runSimulation(comparisonParams);
         setCompareResult(comparisonResult);
       } else {
         setCompareResult(null);
       }
-      
     } catch (error) {
       console.error("TSP simulation error:", error);
       toast.error("Error running TSP simulation");
     }
   };
-  
+
   // Handle comparison algorithm change
   const handleCompareAlgorithmChange = (algorithm: Algorithm | null) => {
     if (algorithm === params.algorithm) {
@@ -77,13 +76,13 @@ const Index = () => {
     setCompareAlgorithm(algorithm);
     setCompareResult(null);
   };
-  
+
   // Reset result when parameters change
   useEffect(() => {
     setResult(null);
     setCompareResult(null);
   }, [params.mapType, params.startLocation]);
-  
+
   // Reset comparison results when primary algorithm changes
   useEffect(() => {
     if (compareAlgorithm === params.algorithm) {
@@ -102,42 +101,28 @@ const Index = () => {
     const handleSidebarTabChange = (event: CustomEvent) => {
       setSidebarTab(event.detail);
     };
-
     window.addEventListener('sidebar-tab-change', handleSidebarTabChange as EventListener);
-    
     return () => {
       window.removeEventListener('sidebar-tab-change', handleSidebarTabChange as EventListener);
     };
   }, []);
-
-  return (
-    <div className="flex h-screen bg-background text-foreground">
-      <TabbedSidebar 
-        params={params} 
-        setParams={setParams} 
-        onRunSimulation={handleRunSimulation} 
-      />
+  return <div className="flex h-screen bg-background text-foreground">
+      <TabbedSidebar params={params} setParams={setParams} onRunSimulation={handleRunSimulation} />
       
       <main className="flex-1 p-4 overflow-y-auto">
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h1 className="text-3xl font-bold text-foreground">Karnataka TSP Solver</h1>
+            <h1 className="text-3xl font-bold text-foreground">Simulaition</h1>
             
             <div className="flex flex-wrap items-center gap-2">
-              <Link 
-                to="/explanation" 
-                state={{ algorithm: params.algorithm, result }}
-                className="text-primary hover:text-primary/80 underline"
-              >
+              <Link to="/explanation" state={{
+              algorithm: params.algorithm,
+              result
+            }} className="text-primary hover:text-primary/80 underline">
                 View Full Explanation
               </Link>
               
-              <Button 
-                variant="outline" 
-                className="flex items-center gap-2"
-                onClick={handleDownloadPDF}
-                disabled={!result}
-              >
+              <Button variant="outline" className="flex items-center gap-2" onClick={handleDownloadPDF} disabled={!result}>
                 <DownloadIcon className="h-4 w-4" /> 
                 Export PDF
               </Button>
@@ -145,15 +130,14 @@ const Index = () => {
           </div>
 
           {/* View Mode Tabs */}
-          <Tabs defaultValue="simulation" value={viewMode} onValueChange={(value) => setViewMode(value as 'simulation' | 'graph')} className="w-full">
+          <Tabs defaultValue="simulation" value={viewMode} onValueChange={value => setViewMode(value as 'simulation' | 'graph')} className="w-full">
             <TabsList className="grid grid-cols-2">
               <TabsTrigger value="simulation">TSP Simulation</TabsTrigger>
               <TabsTrigger value="graph">Graph Builder</TabsTrigger>
             </TabsList>
           </Tabs>
           
-          {viewMode === 'simulation' && (
-            <>
+          {viewMode === 'simulation' && <>
               {/* TSP Algorithm comparison selector */}
               <div className="bg-muted/40 p-4 rounded-md border">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -162,79 +146,45 @@ const Index = () => {
                     <h2 className="text-lg font-medium">TSP Algorithm Comparison</h2>
                   </div>
                   
-                  <RadioGroup 
-                    className="flex space-x-2" 
-                    value={compareAlgorithm || "none"}
-                    onValueChange={(value) => handleCompareAlgorithmChange(value === "none" ? null : value as Algorithm)}
-                  >
+                  <RadioGroup className="flex space-x-2" value={compareAlgorithm || "none"} onValueChange={value => handleCompareAlgorithmChange(value === "none" ? null : value as Algorithm)}>
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="none" id="none" />
                       <Label htmlFor="none">None</Label>
                     </div>
                     
-                    {["brute-force", "dynamic-programming", "nearest-neighbor", "branch-and-bound"].filter(algo => algo !== params.algorithm).map((algo) => (
-                      <div key={algo} className="flex items-center space-x-2">
+                    {["brute-force", "dynamic-programming", "nearest-neighbor", "branch-and-bound"].filter(algo => algo !== params.algorithm).map(algo => <div key={algo} className="flex items-center space-x-2">
                         <RadioGroupItem value={algo} id={algo} />
                         <Label htmlFor={algo}>
-                          {algo === "brute-force" ? "Brute Force" : 
-                           algo === "dynamic-programming" ? "Dynamic Programming" : 
-                           algo === "nearest-neighbor" ? "Nearest Neighbor" : 
-                           "Branch and Bound"}
+                          {algo === "brute-force" ? "Brute Force" : algo === "dynamic-programming" ? "Dynamic Programming" : algo === "nearest-neighbor" ? "Nearest Neighbor" : "Branch and Bound"}
                         </Label>
-                      </div>
-                    ))}
+                      </div>)}
                   </RadioGroup>
                 </div>
                 
-                {compareAlgorithm && compareResult && (
-                  <div className="mt-3 text-sm text-muted-foreground">
+                {compareAlgorithm && compareResult && <div className="mt-3 text-sm text-muted-foreground">
                     Comparing {params.algorithm} (solid line) with {compareAlgorithm} (dashed line) for TSP tour
-                  </div>
-                )}
+                  </div>}
               </div>
-            </>
-          )}
+            </>}
           
           <div id="pdf-content" className="space-y-6">
-            {viewMode === 'graph' ? (
-              <div className="h-[800px]">
-                <GraphBuilder 
-                  isEmbedded={false}
-                  showControls={true}
-                />
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {viewMode === 'graph' ? <div className="h-[800px]">
+                <GraphBuilder isEmbedded={false} showControls={true} />
+              </div> : <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="h-[400px]">
-                  <MapView 
-                    mapType={params.mapType as MapType} 
-                    result={result} 
-                    compareResult={compareResult}
-                    startLocation={params.startLocation}
-                    showCompare={!!compareAlgorithm && !!compareResult}
-                  />
+                  <MapView mapType={params.mapType as MapType} result={result} compareResult={compareResult} startLocation={params.startLocation} showCompare={!!compareAlgorithm && !!compareResult} />
                 </div>
                 <div>
                   <ComparisonTable result={result} compareResult={compareResult} />
                 </div>
-              </div>
-            )}
+              </div>}
           </div>
           
-          {viewMode === 'simulation' && (
-            <div className="mt-8">
-              <AlgorithmExplanation 
-                algorithm={params.algorithm as Algorithm} 
-                result={result}
-                compareAlgorithm={compareAlgorithm as Algorithm | undefined}
-                compareResult={compareResult}
-              />
-            </div>
-          )}
+          {viewMode === 'simulation' && <div className="mt-8">
+              <AlgorithmExplanation algorithm={params.algorithm as Algorithm} result={result} compareAlgorithm={compareAlgorithm as Algorithm | undefined} compareResult={compareResult} />
+            </div>}
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
