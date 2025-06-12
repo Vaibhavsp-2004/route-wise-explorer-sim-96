@@ -28,7 +28,7 @@ const TabbedSidebar: React.FC<TabbedSidebarProps> = ({
   return (
     <div className="bg-sidebar p-4 rounded-lg w-80 flex flex-col gap-2 h-full max-h-screen overflow-hidden">
       <div className="flex items-center justify-center mb-2">
-        <h2 className="text-sidebar-foreground text-2xl font-bold">RouteWise Explorer</h2>
+        <h2 className="text-sidebar-foreground text-2xl font-bold">TSP Solver</h2>
       </div>
       
       <Tabs 
