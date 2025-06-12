@@ -198,7 +198,7 @@ const Sidebar = ({ params, setParams, onRunSimulation, tabbed = false }: Sidebar
   return (
     <aside className="bg-sidebar p-4 rounded-lg w-80 flex flex-col gap-5 h-full max-h-screen overflow-y-auto">
       <div className="flex items-center justify-center mb-2">
-        <h2 className="text-sidebar-foreground text-2xl font-bold">Karnataka TSP Solver</h2>
+        <h2 className="text-sidebar-foreground text-2xl font-bold">Simulation</h2>
       </div>
       {content}
     </aside>
